@@ -31,6 +31,15 @@ const wordSchema = new mongoose.Schema({
   exampleSentence: { type: String, required: true },
   phonetic: { type: String, required: true },
   related: String,
+  tags: {
+    type: [
+      {
+        type: String,
+        enum: ['CET4', 'CET6', 'TOEFL', 'IELTS', 'GRE', '考研', '编程', '日常'],
+      },
+    ],
+    default: [],
+  },
   userLearningData: [userLearningSchema],
   createdAt: { type: Date },
 });
