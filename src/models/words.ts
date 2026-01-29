@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
-const definitionSchema = new mongoose.Schema({
+interface Definition {
+  meaning: string;
+  partOfSpeech: string;
+}
+
+const definitionSchema = new mongoose.Schema<Definition>({
   meaning: { type: String, required: [true, 'Must have a meaning'] },
   partOfSpeech: {
     type: String,
@@ -9,14 +14,28 @@ const definitionSchema = new mongoose.Schema({
   },
 });
 
-const userLearningSchema = new mongoose.Schema({
-  userId: mongoose.Types.ObjectId,
-  familiarity: { type: Number, required: true, default: 0, enum: [0, 1, 2, 3] },
-  favorited: { type: Boolean, required: true, default: false },
-  mastered: { type: Boolean, required: true, default: false },
-});
+export interface Word {
+  definitions: Definition[];
+  english: string;
+  exampleSentence: string[];
+  phonetic: string;
+  related: string[];
+  tags: string[];
+}
 
-const wordSchema = new mongoose.Schema({
+type THydratedWordDocument = {
+  definitions?: mongoose.Types.DocumentArray<Definition>;
+  english: string;
+  exampleSentence: string[];
+  phonetic: string;
+  related: string[];
+  tags: string[];
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type WordModelType = mongoose.Model<Word, {}, {}, {}, THydratedWordDocument>;
+
+const wordSchema = new mongoose.Schema<Word, WordModelType>({
   definitions: {
     type: [definitionSchema],
     required: true,
@@ -28,9 +47,9 @@ const wordSchema = new mongoose.Schema({
     },
   },
   english: { type: String, required: true, lowercase: true, index: true, trim: true },
-  exampleSentence: { type: String, required: true },
+  exampleSentence: { type: [String], required: true },
   phonetic: { type: String, required: true },
-  related: String,
+  related: [String],
   tags: {
     type: [
       {
@@ -40,8 +59,6 @@ const wordSchema = new mongoose.Schema({
     ],
     default: [],
   },
-  userLearningData: [userLearningSchema],
-  createdAt: { type: Date },
 });
 
 export default mongoose.model('Word', wordSchema);
