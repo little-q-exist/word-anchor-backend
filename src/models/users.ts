@@ -15,25 +15,37 @@ const userLearningSchema = new mongoose.Schema<UserLearningData>({
   // TODO: 用户复习进度
 });
 
-interface User {
+export interface NewUser {
   username: string;
+  email?: string;
+  password: string;
+}
+
+export interface User {
+  username: string;
+  email?: string;
   passwordHash: string;
   userLearningData: UserLearningData[];
+  isAdmin: boolean;
 }
 
 type THydratedUserDocument = {
   username: string;
+  email?: string;
   passwordHash: string;
   userLearningData?: mongoose.Types.DocumentArray<UserLearningData>;
+  isAdmin: boolean;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type UserModelType = mongoose.Model<User, {}, {}, {}, THydratedUserDocument>;
 
 const userSchema = new mongoose.Schema<User, UserModelType>({
-  username: { type: String, required: true },
+  username: { type: String, required: true, index: 1 },
+  email: String,
   passwordHash: { type: String, required: true },
   userLearningData: [userLearningSchema],
+  isAdmin: { type: Boolean, required: true, default: false },
 });
 
 export default mongoose.model('User', userSchema);
