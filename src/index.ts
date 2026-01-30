@@ -4,6 +4,10 @@ import cors from 'cors';
 import 'dotenv/config';
 
 import wordRouter from './controllers/word.js';
+import userRouter from './controllers/users.js';
+import loginRouter from './controllers/login.js';
+
+import { SERVER_URL } from './constants.js';
 
 const app = express();
 app.use(express.json());
@@ -28,7 +32,10 @@ app.get('/', (_req, res) => {
 });
 
 app.use('/api/words', wordRouter);
+app.use('/api/users', userRouter);
+app.use('/api/login', loginRouter);
 
 app.listen(PORT, () => {
-  console.info(`Server is running at http://localhost:${PORT}/api/words`);
+  console.info(`Server is running at ${SERVER_URL}/words`);
+  console.info(`Server is running at ${SERVER_URL}/users`);
 });
