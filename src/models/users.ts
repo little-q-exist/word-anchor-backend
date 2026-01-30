@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 
-interface UserLearningData {
+export interface UserLearningData {
   familiarity: number;
   favorited: boolean;
   mastered: boolean;
-  wordId?: mongoose.Types.ObjectId | null;
+  wordId: mongoose.Types.ObjectId;
 }
 
 const userLearningSchema = new mongoose.Schema<UserLearningData>({
-  wordId: { type: mongoose.Types.ObjectId, ref: 'Word' },
+  wordId: { type: mongoose.Types.ObjectId, required: true, ref: 'Word' },
   familiarity: { type: Number, required: true, default: 0, enum: [0, 1, 2, 3] },
   favorited: { type: Boolean, required: true, default: false },
   mastered: { type: Boolean, required: true, default: false },

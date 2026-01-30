@@ -16,8 +16,7 @@ router.post(
     const { username, password, email = '' } = req.body;
     const saltRound = 13;
     const passwordHash = await bcrypt.hash(password, saltRound);
-    const newUser = new User({ username, passwordHash, email });
-    await newUser.save();
+    const newUser = await new User({ username, passwordHash, email }).save();
     res.json(newUser);
   }
 );
