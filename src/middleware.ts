@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JsonWebTokenError } from 'jsonwebtoken';
+import { Error as MongooseError } from 'mongoose';
 
 import User from './models/users.js';
 
@@ -26,12 +27,8 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
     res.locals.user = userInDB;
     next();
   } catch (error) {
-    if (error instanceof JsonWebTokenError) {
-      res.status(401).json({ error: { name: error.name, message: error.message } });
-    } else {
-      res.status(401).json({ error: error });
-      console.info(error);
-    }
+    console.info(error);
+    next(error);
   }
 };
 
@@ -41,3 +38,17 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
  * Access the user through res.locals.user.
  */
 export const authTokenMiddleware = [tokenExtractor, tokenAuthenticator];
+
+export const unknownEndPoint = (_req: Request, res: Response) => {
+  return res.status(404).json({ error: 'unknown endpoint' });
+};
+
+export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
+  if (error instanceof JsonWebTokenError) {
+    return res.status(401).json({ error: { name: error.name, message: error.message } });
+  } else if (error instanceof MongooseError.ValidationError) {
+    return res.status(401).json({ error: { name: error.name, errors: error.errors } });
+  } else {
+    res.status(401).json({ error: error });
+  }
+};

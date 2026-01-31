@@ -6,6 +6,7 @@ import 'dotenv/config';
 import wordRouter from './controllers/word.js';
 import userRouter from './controllers/users.js';
 import loginRouter from './controllers/login.js';
+import { unknownEndPoint, errorHandler } from './middleware.js';
 
 import { SERVER_URL } from './constants.js';
 
@@ -34,6 +35,9 @@ app.get('/', (_req, res) => {
 app.use('/api/words', wordRouter);
 app.use('/api/users', userRouter);
 app.use('/api/login', loginRouter);
+
+app.use(unknownEndPoint);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.info(`Server is running at ${SERVER_URL}/words`);
