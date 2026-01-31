@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JsonWebTokenError } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { Error as MongooseError } from 'mongoose';
 
 import User from './models/users.js';
@@ -44,7 +44,7 @@ export const unknownEndPoint = (_req: Request, res: Response) => {
 };
 
 export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
-  if (error instanceof JsonWebTokenError) {
+  if (error instanceof jwt.JsonWebTokenError) {
     return res.status(401).json({ error: { name: error.name, message: error.message } });
   } else if (error instanceof MongooseError.ValidationError) {
     return res.status(401).json({ error: { name: error.name, errors: error.errors } });
