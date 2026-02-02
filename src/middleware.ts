@@ -19,12 +19,16 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
     res.status(401).json({ error: 'invalid token' });
   }
   try {
-    const decodedToken = JSON.parse(String(jwt.verify(token, process.env.SECRET || 'SECRET')));
+    const decodedToken = jwt.verify(token, process.env.SECRET || 'SECRET');
+    if (typeof decodedToken === 'string' || decodedToken instanceof String) {
+      return res.status(401).json({ error: 'invalid token' });
+    }
     const userInDB = await User.findById(decodedToken._id);
     if (!userInDB) {
       return res.status(401).json({ error: 'invalid user' });
     }
     res.locals.user = userInDB;
+    res.locals._id = userInDB._id.toString();
     next();
   } catch (error) {
     console.info(error);
@@ -36,6 +40,7 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
  * extract token in request.authorization, verify and find the corresponding user.
  * Access the token through res.locals.token.
  * Access the user through res.locals.user.
+ * Access the user id through res.locals._id.
  */
 export const authTokenMiddleware = [tokenExtractor, tokenAuthenticator];
 
@@ -51,4 +56,14 @@ export const errorHandler = (error: Error, req: Request, res: Response, next: Ne
   } else {
     res.status(401).json({ error: error });
   }
+};
+
+export const requestLogger = (req: Request, _res: Response, next: NextFunction) => {
+  if (req.method !== 'GET') {
+    console.info(req.url);
+    console.info(req.method);
+    console.info(req.body);
+    console.info('====');
+  }
+  next();
 };

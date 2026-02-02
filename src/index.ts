@@ -6,7 +6,7 @@ import 'dotenv/config';
 import wordRouter from './controllers/word.js';
 import userRouter from './controllers/users.js';
 import loginRouter from './controllers/login.js';
-import { unknownEndPoint, errorHandler } from './middleware.js';
+import { unknownEndPoint, errorHandler, requestLogger } from './middleware.js';
 
 import { SERVER_URL } from './constants.js';
 
@@ -27,6 +27,8 @@ mongoose
   .catch((error) => {
     console.error('failed to connect', error);
   });
+
+app.use(requestLogger);
 
 app.get('/', (_req, res) => {
   res.send('hello world!');

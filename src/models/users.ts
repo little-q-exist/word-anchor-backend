@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
 
 export interface UserLearningData {
-  familiarity: number;
-  favorited: boolean;
+  familiarity: 0 | 1 | 2 | 3;
   mastered: boolean;
+
+  favorited: boolean;
+
   wordId: mongoose.Types.ObjectId;
 }
 
