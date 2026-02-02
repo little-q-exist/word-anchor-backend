@@ -16,16 +16,16 @@ const tokenExtractor = (req: Request, res: Response, next: NextFunction) => {
 const tokenAuthenticator = async (req: Request, res: Response, next: NextFunction) => {
   const token = res.locals.token;
   if (!token) {
-    res.status(401).json({ error: 'invalid token' });
+    return res.status(401).json({ error: 'invalid token' });
   }
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET || 'SECRET');
     if (typeof decodedToken === 'string' || decodedToken instanceof String) {
-      return res.status(401).json({ error: 'invalid token' });
+      return res.status(401).json({ error: 'invalid token format' });
     }
     const userInDB = await User.findById(decodedToken._id);
     if (!userInDB) {
-      return res.status(401).json({ error: 'invalid user' });
+      return res.status(401).json({ error: 'invalid user id' });
     }
     res.locals.user = userInDB;
     res.locals._id = userInDB._id.toString();
@@ -48,13 +48,19 @@ export const unknownEndPoint = (_req: Request, res: Response) => {
   return res.status(404).json({ error: 'unknown endpoint' });
 };
 
-export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
+export const classErrorHandler = (
+  error: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+) => {
   if (error instanceof jwt.JsonWebTokenError) {
     return res.status(401).json({ error: { name: error.name, message: error.message } });
   } else if (error instanceof MongooseError.ValidationError) {
-    return res.status(401).json({ error: { name: error.name, errors: error.errors } });
+    return res.status(400).json({ error: { name: error.name, errors: error.errors } });
   } else {
-    res.status(401).json({ error: error });
+    console.error(error);
+    res.status(500).json({ error: 'internal server error' });
   }
 };
 

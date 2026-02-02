@@ -36,58 +36,52 @@ router.patch(
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
     res: Response<UserLearningData | { error: string }>
   ) => {
-    try {
-      const user = res.locals.user;
-      const familiarity = req.body.familiarity;
-      const wordId = req.params.wordId;
-      const userId = req.params.userId;
+    const user = res.locals.user;
+    const familiarity = req.body.familiarity;
+    const wordId = req.params.wordId;
+    const userId = req.params.userId;
 
-      if (!user) {
-        // TODO: check all status code. They may wrong.
-        return res.status(401).json({ error: 'user not authenticated' });
-      }
-
-      if (![0, 1, 2, 3].includes(familiarity)) {
-        return res.status(400).json({ error: 'invalid familiarity' });
-      }
-
-      if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-        return res.status(400).json({ error: 'invalid user Id' });
-      }
-
-      if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
-        return res.status(400).json({ error: 'invalid word Id' });
-      }
-
-      user.userLearningData = user.userLearningData || [];
-
-      let wordDoc = user.userLearningData.find(
-        (data: UserLearningData) => data.wordId.toString() === wordId
-      );
-
-      if (!wordDoc) {
-        wordDoc = {
-          familiarity,
-          favorited: false,
-          mastered: false,
-          wordId: new mongoose.Types.ObjectId(wordId),
-        };
-        user.userLearningData.push(wordDoc);
-      } else {
-        wordDoc.familiarity = familiarity;
-      }
-
-      wordDoc.mastered = familiarity === 3;
-
-      const updatedUser = await user.save();
-      const newWordDoc = updatedUser.userLearningData.find(
-        (data: UserLearningData) => data.wordId.toString() === wordId
-      );
-      res.json(newWordDoc);
-    } catch (error) {
-      console.info(error);
-      return res.status(500).json({ error: 'internal server error' });
+    if (!user) {
+      return res.status(401).json({ error: 'user not authenticated' });
     }
+
+    if (![0, 1, 2, 3].includes(familiarity)) {
+      return res.status(400).json({ error: 'invalid familiarity' });
+    }
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
+      return res.status(400).json({ error: 'invalid user Id' });
+    }
+
+    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
+      return res.status(400).json({ error: 'invalid word Id' });
+    }
+
+    user.userLearningData = user.userLearningData || [];
+
+    let wordDoc = user.userLearningData.find(
+      (data: UserLearningData) => data.wordId.toString() === wordId
+    );
+
+    if (!wordDoc) {
+      wordDoc = {
+        familiarity,
+        favorited: false,
+        mastered: false,
+        wordId: new mongoose.Types.ObjectId(wordId),
+      };
+      user.userLearningData.push(wordDoc);
+    } else {
+      wordDoc.familiarity = familiarity;
+    }
+
+    wordDoc.mastered = familiarity === 3;
+
+    const updatedUser = await user.save();
+    const newWordDoc = updatedUser.userLearningData.find(
+      (data: UserLearningData) => data.wordId.toString() === wordId
+    );
+    res.json(newWordDoc);
   }
 );
 

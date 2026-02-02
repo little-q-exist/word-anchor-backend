@@ -12,13 +12,13 @@ router.post('/', async (req, res) => {
   const userInDB = await User.findOne({ username: username });
 
   if (!userInDB) {
-    return res.status(401).json({ error: 'invalid username' });
+    return res.status(400).json({ error: 'invalid username' });
   }
 
   const passwordCorrect = await bcrypt.compare(password, userInDB.passwordHash);
 
   if (!passwordCorrect) {
-    return res.status(401).json({ error: 'invalid password' });
+    return res.status(400).json({ error: 'invalid password' });
   }
 
   const token = jwt.sign({ username, _id: userInDB._id }, process.env.SECRET || 'SECRET');
