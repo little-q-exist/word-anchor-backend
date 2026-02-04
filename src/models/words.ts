@@ -62,7 +62,7 @@ const wordSchema = new mongoose.Schema<Word, WordModelType>({
     default: [],
   },
   createdBy: {
-    type: mongoose.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User',
   },
