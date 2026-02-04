@@ -1,21 +1,35 @@
 import mongoose from 'mongoose';
+import dayjs from 'dayjs';
+
+import { supermemo } from '../algo/SM-2.js';
 
 export interface UserLearningData {
-  familiarity: 0 | 1 | 2 | 3;
-  mastered: boolean;
+  easeFactor: number;
+  lastLearned: string;
+  interval: number;
+  dueDate: string;
+  repetition: number;
 
   favorited: boolean;
 
   wordId: mongoose.Types.ObjectId;
 }
 
-const userLearningSchema = new mongoose.Schema<UserLearningData>({
-  wordId: { type: mongoose.Types.ObjectId, required: true, ref: 'Word' },
-  familiarity: { type: Number, required: true, default: 0, enum: [0, 1, 2, 3] },
-  favorited: { type: Boolean, required: true, default: false },
-  mastered: { type: Boolean, required: true, default: false },
-  // TODO: 用户复习进度
-});
+export const defaultUserLearningData = {
+  easeFactor: 2.5,
+  lastLearned: dayjs(Date.now()).toISOString(),
+  interval: 0,
+  dueDate: dayjs(Date.now()).toISOString(),
+  repetition: 0,
+  favorited: false,
+};
+
+export const learn = (data: UserLearningData, quality: number) => {
+  const { easeFactor, interval, repetition, shouldRepeat } = supermemo(data, quality);
+  const lastLearned = dayjs(Date.now()).toISOString();
+  const dueDate = dayjs(lastLearned).add(interval, 'day').toISOString();
+  return { ...data, easeFactor, interval, repetition, shouldRepeat, dueDate };
+};
 
 export interface NewUser {
   username: string;
@@ -31,23 +45,26 @@ export interface User {
   isAdmin: boolean;
 }
 
-type THydratedUserDocument = {
-  username: string;
-  email?: string;
-  passwordHash: string;
-  userLearningData?: mongoose.Types.DocumentArray<UserLearningData>;
-  isAdmin: boolean;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-type UserModelType = mongoose.Model<User, {}, {}, {}, THydratedUserDocument>;
-
-const userSchema = new mongoose.Schema<User, UserModelType>({
+const userSchema = new mongoose.Schema<User>({
   username: { type: String, required: true, index: 1 },
   email: String,
   passwordHash: { type: String, required: true },
-  userLearningData: [userLearningSchema],
+  userLearningData: {
+    type: [
+      {
+        wordId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Word' },
+        easeFactor: { type: Number, required: true, default: 2.5 },
+        lastLearned: { type: String, required: true, default: dayjs().toISOString() },
+        interval: { type: Number, required: true, default: 0 },
+        dueDate: { type: String, required: true, default: dayjs().toISOString() },
+        repetition: { type: Number, required: true, default: 0 },
+
+        favorited: { type: Boolean, required: true, default: false },
+      },
+    ],
+    default: [],
+  },
   isAdmin: { type: Boolean, required: true, default: false },
 });
 
-export default mongoose.model('User', userSchema);
+export default mongoose.model<User>('User', userSchema);
