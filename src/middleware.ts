@@ -27,7 +27,6 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
     if (!userInDB) {
       return res.status(401).json({ error: 'invalid user id' });
     }
-    res.locals.user = userInDB;
     res.locals._id = userInDB._id.toString();
     next();
   } catch (error) {
@@ -39,7 +38,6 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
 /**
  * extract token in request.authorization, verify and find the corresponding user.
  * Access the token through res.locals.token.
- * Access the user through res.locals.user.
  * Access the user id through res.locals._id.
  */
 export const authTokenMiddleware = [tokenExtractor, tokenAuthenticator];
