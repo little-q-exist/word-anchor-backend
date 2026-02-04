@@ -2,7 +2,12 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 
-import User, { type User as UserType, NewUser, UserLearningData } from '../models/users.js';
+import User, {
+  defaultUserLearningData,
+  learn,
+  NewUser,
+  UserLearningData,
+} from '../models/users.js';
 
 import { authTokenMiddleware } from '../middleware.js';
 
@@ -18,16 +23,13 @@ router.get('/:id', async (req, res) => {
   res.json(data);
 });
 
-router.post(
-  '/register',
-  async (req: Request<unknown, unknown, NewUser>, res: Response<UserType>) => {
-    const { username, password, email = '' } = req.body;
-    const saltRound = 13;
-    const passwordHash = await bcrypt.hash(password, saltRound);
-    const newUser = await new User({ username, passwordHash, email }).save();
-    res.json(newUser);
-  }
-);
+router.post('/register', async (req: Request<unknown, unknown, NewUser>, res: Response) => {
+  const { username, password, email = '' } = req.body;
+  const saltRound = 13;
+  const passwordHash = await bcrypt.hash(password, saltRound);
+  const newUser = await new User({ username, passwordHash, email }).save();
+  res.json(newUser);
+});
 
 router.patch(
   '/:userId/words/:wordId/familiarity',
@@ -36,7 +38,7 @@ router.patch(
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
     res: Response<UserLearningData | { error: string }>
   ) => {
-    const user = res.locals.user;
+    const user = await User.findById(res.locals._id);
     const familiarity = req.body.familiarity;
     const wordId = req.params.wordId;
     const userId = req.params.userId;
@@ -57,25 +59,19 @@ router.patch(
       return res.status(400).json({ error: 'invalid word Id' });
     }
 
-    user.userLearningData = user.userLearningData || [];
+    const dataList = user.userLearningData;
 
-    let wordDoc = user.userLearningData.find(
-      (data: UserLearningData) => data.wordId.toString() === wordId
-    );
+    let wordDoc = dataList.find((data) => wordId.toString() === data.wordId.toString());
 
     if (!wordDoc) {
-      wordDoc = {
-        familiarity,
-        favorited: false,
-        mastered: false,
+      dataList.push({
         wordId: new mongoose.Types.ObjectId(wordId),
-      };
-      user.userLearningData.push(wordDoc);
+        ...defaultUserLearningData,
+      });
+      wordDoc = learn(dataList[dataList.length]!, familiarity);
     } else {
-      wordDoc.familiarity = familiarity;
+      wordDoc = learn(wordDoc, familiarity);
     }
-
-    wordDoc.mastered = familiarity === 3;
 
     const updatedUser = await user.save();
     const newWordDoc = updatedUser.userLearningData.find(
