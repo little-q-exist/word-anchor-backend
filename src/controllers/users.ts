@@ -31,12 +31,17 @@ router.post('/register', async (req: Request<unknown, unknown, NewUser>, res: Re
   res.json(newUser);
 });
 
+interface UpdateFamiliarityResponse extends UserLearningData {
+  shouldRepeat: boolean;
+}
+
 router.patch(
   '/:userId/words/:wordId/familiarity',
   authTokenMiddleware,
   async (
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
-    res: Response<UserLearningData | { error: string }>
+    // res: Response<UpdateFamiliarityResponse | { error: string }>
+    res: Response
   ) => {
     const user = await User.findById(res.locals._id);
     const familiarity = req.body.familiarity;
@@ -64,19 +69,20 @@ router.patch(
     let wordDoc = dataList.find((data) => wordId.toString() === data.wordId.toString());
 
     if (!wordDoc) {
-      dataList.push({
+      wordDoc = {
         wordId: new mongoose.Types.ObjectId(wordId),
         ...defaultUserLearningData,
-      });
-      wordDoc = learn(dataList[dataList.length]!, familiarity);
-    } else {
-      wordDoc = learn(wordDoc, familiarity);
+      };
+      dataList.push(wordDoc);
     }
+    const learnResult = learn(wordDoc, familiarity);
+    wordDoc = learnResult.data;
 
     const updatedUser = await user.save();
     const newWordDoc = updatedUser.userLearningData.find(
       (data: UserLearningData) => data.wordId.toString() === wordId
-    );
+    ) as UpdateFamiliarityResponse;
+    newWordDoc.shouldRepeat = learnResult.shouldRepeat;
     res.json(newWordDoc);
   }
 );

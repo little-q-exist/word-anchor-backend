@@ -24,11 +24,21 @@ export const defaultUserLearningData = {
   favorited: false,
 };
 
-export const learn = (data: UserLearningData, quality: number) => {
+export interface LearnReturnItem {
+  data: UserLearningData;
+  shouldRepeat: boolean;
+}
+
+export const learn = (data: UserLearningData, quality: number): LearnReturnItem => {
   const { easeFactor, interval, repetition, shouldRepeat } = supermemo(data, quality);
   const lastLearned = dayjs(Date.now()).toISOString();
   const dueDate = dayjs(lastLearned).add(interval, 'day').toISOString();
-  return { ...data, easeFactor, interval, repetition, shouldRepeat, dueDate };
+  data.easeFactor = easeFactor;
+  data.repetition = repetition;
+  data.interval = interval;
+  data.lastLearned = lastLearned;
+  data.dueDate = dueDate;
+  return { data, shouldRepeat };
 };
 
 export interface NewUser {
