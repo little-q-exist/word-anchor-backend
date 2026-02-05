@@ -1,8 +1,6 @@
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
 
-import { supermemo } from '../algo/SM-2.js';
-
 export interface UserLearningData {
   easeFactor: number;
   lastLearned: string;
@@ -22,23 +20,6 @@ export const defaultUserLearningData = {
   dueDate: dayjs(Date.now()).toISOString(),
   repetition: 0,
   favorited: false,
-};
-
-export interface LearnReturnItem {
-  data: UserLearningData;
-  shouldRepeat: boolean;
-}
-
-export const learn = (data: UserLearningData, quality: number): LearnReturnItem => {
-  const { easeFactor, interval, repetition, shouldRepeat } = supermemo(data, quality);
-  const lastLearned = dayjs(Date.now()).toISOString();
-  const dueDate = dayjs(lastLearned).add(interval, 'day').toISOString();
-  data.easeFactor = easeFactor;
-  data.repetition = repetition;
-  data.interval = interval;
-  data.lastLearned = lastLearned;
-  data.dueDate = dueDate;
-  return { data, shouldRepeat };
 };
 
 export interface NewUser {

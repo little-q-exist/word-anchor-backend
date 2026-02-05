@@ -2,14 +2,11 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 
-import User, {
-  defaultUserLearningData,
-  learn,
-  NewUser,
-  UserLearningData,
-} from '../models/users.js';
+import User, { defaultUserLearningData, NewUser, UserLearningData } from '../models/users.js';
 
 import { authTokenMiddleware } from '../middleware.js';
+
+import { learn } from '../algo/learn.js';
 
 const router = express.Router();
 
