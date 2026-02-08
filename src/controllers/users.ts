@@ -10,15 +10,32 @@ import { learn } from '../algo/learn.js';
 
 const router = express.Router();
 
-router.get('/', async (_req, res) => {
-  const data = await User.find({});
-  res.json(data);
+router.get('/', authTokenMiddleware, async (_req: Request, res: Response) => {
+  const user = await User.findById(res.locals._id);
+  if (user && user.isAdmin) {
+    const data = await User.find({}).select('+passwordHash');
+    return res.json(data);
+  } else {
+    return res.status(403).json({ error: 'forbidden' });
+  }
 });
 
 router.get('/:id', async (req, res) => {
-  const data = await User.findById(req.params.id);
+  const data = await User.findById(req.params.id).select('-userLearningData');
   res.json(data);
 });
+
+router.get(
+  '/:id/learning-data',
+  authTokenMiddleware,
+  async (req: Request<{ id: string }>, res: Response) => {
+    if (req.params.id !== res.locals._id) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+    const data = await User.findById(req.params.id).select('userLearningData');
+    res.json(data);
+  }
+);
 
 router.post('/register', async (req: Request<unknown, unknown, NewUser>, res: Response) => {
   const { username, password, email = '' } = req.body;

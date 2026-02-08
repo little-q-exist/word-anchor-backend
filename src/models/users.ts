@@ -39,7 +39,7 @@ export interface User {
 const userSchema = new mongoose.Schema<User>({
   username: { type: String, required: true, index: 1 },
   email: String,
-  passwordHash: { type: String, required: true },
+  passwordHash: { type: String, required: true, select: false },
   userLearningData: {
     type: [
       {
