@@ -5,8 +5,32 @@ import { authTokenMiddleware } from '../middleware.js';
 
 const router = express.Router();
 
-router.get('/', async (_req, res) => {
-  const data = await Word.find({});
+interface WordsQuery {
+  english?: object;
+  'definitions.meaning'?: object;
+  tags?: object;
+}
+
+router.get('/', async (req, res) => {
+  const {
+    english,
+    meaning,
+    tags,
+    limit = 10,
+    page = 1,
+  } = req.query;
+
+  const queryFilter: WordsQuery = {};
+
+  if (english) queryFilter.english = { $regex: english, $options: 'i' };
+  if (tags) queryFilter.tags = { $in: (tags as string).split(',') };
+  if (meaning) queryFilter['definitions.meaning'] = { $regex: meaning, $options: 'i' };
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const data = await Word.find(queryFilter)
+    .skip(skip)
+    .limit(Number(limit));
   res.json(data);
 });
 
