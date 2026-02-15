@@ -52,6 +52,7 @@ export const classErrorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
+  console.error(error);
   if (error instanceof jwt.JsonWebTokenError) {
     return res.status(401).json({ error: { name: error.name, message: error.message } });
   } else if (error instanceof MongooseError.ValidationError) {
