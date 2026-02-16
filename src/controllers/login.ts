@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { username, password } = req.body;
 
-  const userInDB = await User.findOne({ username: username });
+  const userInDB = await User.findOne({ username: username }).select('+passwordHash');
 
   if (!userInDB) {
     return res.status(400).json({ error: 'invalid username' });
