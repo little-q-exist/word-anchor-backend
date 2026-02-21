@@ -14,6 +14,15 @@ const definitionSchema = new mongoose.Schema<Definition>({
   },
 });
 
+export interface NewWord {
+  definitions: Definition[];
+  english: string;
+  exampleSentence: string[];
+  phonetic: string;
+  related: string[];
+  tags: string[];
+}
+
 export interface Word {
   definitions: Definition[];
   english: string;

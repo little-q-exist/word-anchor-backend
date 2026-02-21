@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
 
-import Word, { type Word as WordType } from '../models/words.js';
+import Word, { type Word as WordType, NewWord } from '../models/words.js';
 import { authTokenMiddleware } from '../middleware.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -12,13 +13,7 @@ interface WordsQuery {
 }
 
 router.get('/', async (req, res) => {
-  const {
-    english,
-    meaning,
-    tags,
-    limit = 10,
-    page = 1,
-  } = req.query;
+  const { english, meaning, tags, limit = 9, page = 1 } = req.query;
 
   const queryFilter: WordsQuery = {};
 
@@ -28,10 +23,12 @@ router.get('/', async (req, res) => {
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const data = await Word.find(queryFilter)
-    .skip(skip)
-    .limit(Number(limit));
+  const data = await Word.find(queryFilter).skip(skip).limit(Number(limit));
   res.json(data);
+});
+
+router.get('/count', async (_req, res) => {
+  return res.json(await Word.countDocuments());
 });
 
 router.put(
@@ -43,6 +40,16 @@ router.put(
       returnOriginal: false,
     });
     return res.json(word);
+  }
+);
+
+router.post(
+  '/',
+  authTokenMiddleware,
+  async (req: Request<unknown, unknown, NewWord>, res: Response) => {
+    const word = { ...req.body, createdBy: new mongoose.Types.ObjectId(res.locals._id) };
+    const newWord = await Word.insertOne(word);
+    return res.json(newWord);
   }
 );
 
