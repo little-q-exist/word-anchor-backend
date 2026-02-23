@@ -84,15 +84,22 @@ router.patch(
 
     let wordDoc = dataList.find((data) => wordId.toString() === data.wordId.toString());
 
+    let learnResult;
+
     if (!wordDoc) {
-      wordDoc = {
-        wordId: new mongoose.Types.ObjectId(wordId),
-        ...defaultUserLearningData,
-      };
-      dataList.push(wordDoc);
+      learnResult = learn(
+        {
+          wordId: new mongoose.Types.ObjectId(wordId),
+          ...defaultUserLearningData,
+        },
+        familiarity
+      );
+      dataList.push(learnResult.data);
+      wordDoc = dataList[dataList.length - 1];
+    } else {
+      learnResult = learn(wordDoc, familiarity);
+      wordDoc = learnResult.data;
     }
-    const learnResult = learn(wordDoc, familiarity);
-    wordDoc = learnResult.data;
 
     const updatedUser = await user.save();
     const newWordDoc = updatedUser.userLearningData.find(
