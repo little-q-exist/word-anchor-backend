@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 
-import User, { defaultUserLearningData, NewUser, UserLearningData } from '../models/users.js';
+import User, { NewUser } from '../models/users.js';
+import UserWord, { defaultUserLearningData, UserLearningData } from '../models/userWords.js';
 
 import { authTokenMiddleware } from '../middleware.js';
 
@@ -24,7 +25,7 @@ router.get('/:id', authTokenMiddleware, async (req: Request<{ id: string }>, res
   if (req.params.id !== res.locals._id) {
     return res.status(403).json({ error: 'forbidden' });
   }
-  const data = await User.findById(req.params.id).select('-userLearningData');
+  const data = await User.findById(req.params.id);
   res.json(data);
 });
 
@@ -35,7 +36,7 @@ router.get(
     if (req.params.id !== res.locals._id) {
       return res.status(403).json({ error: 'forbidden' });
     }
-    const data = await User.findById(req.params.id).select('userLearningData');
+    const data = await UserWord.find({ userId: req.params.id });
     res.json(data);
   }
 );
@@ -57,16 +58,11 @@ router.patch(
   authTokenMiddleware,
   async (
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
-    res: Response
+    res: Response<UpdateFamiliarityResponse | { error: string }>
   ) => {
-    const user = await User.findById(res.locals._id);
     const familiarity = req.body.familiarity;
     const wordId = req.params.wordId;
     const userId = req.params.userId;
-
-    if (!user) {
-      return res.status(401).json({ error: 'user not authenticated' });
-    }
 
     if (![0, 1, 2, 3, 4, 5].includes(familiarity)) {
       return res.status(400).json({ error: 'invalid familiarity' });
@@ -80,33 +76,33 @@ router.patch(
       return res.status(400).json({ error: 'invalid word Id' });
     }
 
-    const dataList = user.userLearningData;
-
-    let wordDoc = dataList.find((data) => wordId.toString() === data.wordId.toString());
+    let wordDoc = await UserWord.findOne({ userId, wordId });
 
     let learnResult;
 
     if (!wordDoc) {
       learnResult = learn(
         {
+          userId: new mongoose.Types.ObjectId(userId),
           wordId: new mongoose.Types.ObjectId(wordId),
           ...defaultUserLearningData,
         },
         familiarity
       );
-      dataList.push(learnResult.data);
-      wordDoc = dataList[dataList.length - 1];
+      wordDoc = new UserWord(learnResult.data);
     } else {
-      learnResult = learn(wordDoc, familiarity);
-      wordDoc = learnResult.data;
+      learnResult = learn(wordDoc.toObject(), familiarity);
+      wordDoc.set(learnResult.data);
     }
 
-    const updatedUser = await user.save();
-    const newWordDoc = updatedUser.userLearningData.find(
-      (data: UserLearningData) => data.wordId.toString() === wordId
-    ) as UpdateFamiliarityResponse;
-    newWordDoc.shouldRepeat = learnResult.shouldRepeat;
-    res.json(newWordDoc);
+    const updatedWordDoc = await wordDoc.save();
+
+    const responseData: UpdateFamiliarityResponse = {
+      ...updatedWordDoc.toObject(),
+      shouldRepeat: learnResult.shouldRepeat,
+    };
+
+    res.json(responseData);
   }
 );
 

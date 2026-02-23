@@ -24,11 +24,54 @@ router.get('/', async (req, res) => {
   const skip = (Number(page) - 1) * Number(limit);
 
   const data = await Word.find(queryFilter).skip(skip).limit(Number(limit));
-  res.json(data);
+  return res.json(data);
 });
 
 router.get('/count', async (_req, res) => {
   return res.json(await Word.countDocuments());
+});
+
+router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) => {
+  const { limit = 10 } = req.params;
+  const userId = res.locals._id;
+
+  const data = await Word.aggregate([
+    {
+      $lookup: {
+        from: 'userwords',
+        let: { wordId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [{ $eq: ['$wordId', '$$wordId'] }, { $eq: ['$userId', userId] }],
+              },
+            },
+          },
+        ],
+        as: 'learningData',
+      },
+    },
+    {
+      $unwind: {
+        path: '$learningData',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $addFields: {
+        sortEaseFactor: { $ifNull: ['$learningData.easeFactor', 9999] },
+      },
+    },
+    { $sort: { sortEaseFactor: 1, _id: 1 } },
+    { $limit: Number(limit) },
+    {
+      $project: {
+        sortEaseFactor: 0, // Remove the temporary sort field
+      },
+    },
+  ]);
+  return res.json(data);
 });
 
 router.put(

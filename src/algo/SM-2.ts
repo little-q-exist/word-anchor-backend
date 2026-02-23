@@ -1,4 +1,4 @@
-import type { UserLearningData } from '../models/users.js';
+import type { UserLearningData } from '../models/userWords.js';
 
 interface supermemoReturnItem {
   easeFactor: number;
@@ -37,7 +37,7 @@ const calculateInterval = (interval: number, repetition: number, easeFactor: num
  *  after submitted learning result.
  *  ONLY call it during the first review of each day  */
 export const supermemo = (
-  { easeFactor, interval, repetition }: UserLearningData,
+  { easeFactor, interval, repetition }: Pick<UserLearningData, 'easeFactor' | 'interval' | 'repetition'>,
   quality: number
 ): supermemoReturnItem => {
   const newRepetition = calculateRepetition(quality, repetition);
