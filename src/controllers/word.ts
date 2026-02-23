@@ -44,7 +44,10 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
           {
             $match: {
               $expr: {
-                $and: [{ $eq: ['$wordId', '$$wordId'] }, { $eq: ['$userId', userId] }],
+                $and: [
+                  { $eq: ['$wordId', '$$wordId'] },
+                  { $eq: ['$userId', new mongoose.Types.ObjectId(userId)] },
+                ],
               },
             },
           },
