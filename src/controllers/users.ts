@@ -20,7 +20,10 @@ router.get('/', authTokenMiddleware, async (_req: Request, res: Response) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authTokenMiddleware, async (req: Request<{ id: string }>, res: Response) => {
+  if (req.params.id !== res.locals._id) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
   const data = await User.findById(req.params.id).select('-userLearningData');
   res.json(data);
 });
@@ -54,7 +57,6 @@ router.patch(
   authTokenMiddleware,
   async (
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
-    // res: Response<UpdateFamiliarityResponse | { error: string }>
     res: Response
   ) => {
     const user = await User.findById(res.locals._id);
@@ -66,7 +68,7 @@ router.patch(
       return res.status(401).json({ error: 'user not authenticated' });
     }
 
-    if (![0, 1, 2, 3].includes(familiarity)) {
+    if (![0, 1, 2, 3, 4, 5].includes(familiarity)) {
       return res.status(400).json({ error: 'invalid familiarity' });
     }
 
