@@ -39,7 +39,7 @@ router.get(
       return res.status(400).json({ error: 'invalid word Id' });
     }
 
-    const query = UserWord.find({ userId, wordId });
+    const query = UserWord.findOne({ userId, wordId });
 
     let fieldsString;
     if (fields) {
