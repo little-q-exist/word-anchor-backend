@@ -32,7 +32,7 @@ router.get('/count', async (_req, res) => {
 });
 
 router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) => {
-  const { limit = 10 } = req.params;
+  const { limit = 10 } = req.query;
   const userId = res.locals._id;
 
   const data = await Word.aggregate([
