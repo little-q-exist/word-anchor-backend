@@ -106,4 +106,41 @@ router.patch(
   }
 );
 
+router.patch(
+  '/:userId/words/:wordId/favorite',
+  authTokenMiddleware,
+  async (req: Request<{ userId: string; wordId: string }>, res: Response) => {
+    const userId = req.params.userId;
+    const wordId = req.params.wordId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
+      return res.status(400).json({ error: 'invalid user Id' });
+    }
+
+    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
+      return res.status(400).json({ error: 'invalid word Id' });
+    }
+
+    let wordDoc = await UserWord.findOne({ userId, wordId });
+
+    if (!wordDoc) {
+      wordDoc = new UserWord({
+        ...defaultUserLearningData,
+        userId: new mongoose.Types.ObjectId(userId),
+        wordId: new mongoose.Types.ObjectId(wordId),
+      });
+    }
+
+    wordDoc.set('favorited', !wordDoc.favorited);
+
+    const updatedWordDoc = await wordDoc.save();
+    res.json({
+      _id: updatedWordDoc._id,
+      wordId: updatedWordDoc.wordId,
+      userId: updatedWordDoc.userId,
+      favorited: updatedWordDoc.favorited,
+    });
+  }
+);
+
 export default router;
