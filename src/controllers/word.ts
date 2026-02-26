@@ -1,10 +1,14 @@
 import express, { Request, Response } from 'express';
 
-import Word, { type Word as WordType, NewWord } from '../models/words.js';
+import Word, { type Word as WordType, NewWord, WordPopulated } from '../models/words.js';
+import UserWord from '../models/userWords.js';
 import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
+import dayjs from 'dayjs';
 
 const router = express.Router();
+dayjs.extend(isSameOrBefore);
 
 interface WordsQuery {
   english?: object;
@@ -35,46 +39,24 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   const { limit = 10 } = req.query;
   const userId = res.locals._id;
 
-  const data = await Word.aggregate([
-    {
-      $lookup: {
-        from: 'userwords',
-        let: { wordId: '$_id' },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ['$wordId', '$$wordId'] },
-                  { $eq: ['$userId', new mongoose.Types.ObjectId(userId)] },
-                ],
-              },
-            },
-          },
-        ],
-        as: 'learningData',
-      },
-    },
-    {
-      $unwind: {
-        path: '$learningData',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $addFields: {
-        sortEaseFactor: { $ifNull: ['$learningData.easeFactor', 9999] },
-      },
-    },
-    { $sort: { sortEaseFactor: 1, _id: 1 } },
-    { $limit: Number(limit) },
-    {
-      $project: {
-        sortEaseFactor: 0, // Remove the temporary sort field
-      },
-    },
-  ]);
-  return res.json(data);
+  const words = await Word.find({ learnedBy: { $nin: [userId] } }).limit(Number(limit));
+  res.json(words);
+});
+
+router.get('/review', authTokenMiddleware, async (req: Request, res: Response) => {
+  const userId = res.locals._id;
+
+  const userData = await UserWord.find({ userId });
+  const overDueData = userData.filter((data) => dayjs(data.dueDate).isSameOrBefore(dayjs(), 'day'));
+  const wordIds = overDueData.map((data) => data.wordId);
+  const wordData = await Word.find({ _id: { $in: wordIds } }).populate('learningData');
+  (wordData as unknown as WordPopulated[]).sort((a, b) => {
+    if (!dayjs(a.learningData[0]!.dueDate).isSame(dayjs(b.learningData[0]!.dueDate), 'day')) {
+      return dayjs(a.learningData[0]!.dueDate).unix() - dayjs(b.learningData[0]!.dueDate).unix();
+    }
+    return a.learningData[0]!.easeFactor - b.learningData[0]!.easeFactor;
+  });
+  res.json(wordData);
 });
 
 router.put(
