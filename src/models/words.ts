@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { UserLearningData } from './userWords.js';
 
 interface Definition {
   meaning: string;
@@ -31,6 +32,7 @@ export interface Word {
   related: string[];
   tags: string[];
   createdBy: mongoose.Types.ObjectId;
+  learnedBy: [mongoose.Types.ObjectId];
 }
 
 type THydratedWordDocument = {
@@ -41,40 +43,65 @@ type THydratedWordDocument = {
   related: string[];
   tags: string[];
   createdBy: mongoose.Types.ObjectId;
+  learnedBy: [mongoose.Types.ObjectId];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type WordModelType = mongoose.Model<Word, {}, {}, {}, THydratedWordDocument>;
 
-const wordSchema = new mongoose.Schema<Word, WordModelType>({
-  definitions: {
-    type: [definitionSchema],
-    required: true,
-    validate: {
-      validator: function (v: Array<unknown>) {
-        return v.length > 0;
+const wordSchema = new mongoose.Schema<Word, WordModelType>(
+  {
+    definitions: {
+      type: [definitionSchema],
+      required: true,
+      validate: {
+        validator: function (v: Array<unknown>) {
+          return v.length > 0;
+        },
+        message: 'Must have at least 1 definition',
       },
-      message: 'Must have at least 1 definition',
     },
-  },
-  english: { type: String, required: true, lowercase: true, index: true, trim: true },
-  exampleSentence: { type: [String], required: true },
-  phonetic: { type: String, required: true },
-  related: [String],
-  tags: {
-    type: [
+    english: { type: String, required: true, lowercase: true, index: true, trim: true },
+    exampleSentence: { type: [String], required: true },
+    phonetic: { type: String, required: true },
+    related: [String],
+    tags: {
+      type: [
+        {
+          type: String,
+          enum: ['CET4', 'CET6', 'TOEFL', 'IELTS', 'GRE', '考研', '编程', '日常'],
+        },
+      ],
+      default: [],
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+    },
+    learnedBy: [
       {
-        type: String,
-        enum: ['CET4', 'CET6', 'TOEFL', 'IELTS', 'GRE', '考研', '编程', '日常'],
+        type: mongoose.Schema.Types.ObjectId,
+        default: [],
+        required: true,
+        ref: 'User',
       },
     ],
-    default: [],
   },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User',
-  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+wordSchema.virtual('learningData', {
+  ref: 'UserWord',
+  localField: '_id',
+  foreignField: 'wordId',
 });
+
+export interface WordPopulated extends Word {
+  learningData: UserLearningData[];
+}
 
 export default mongoose.model('Word', wordSchema);
