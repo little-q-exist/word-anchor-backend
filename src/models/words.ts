@@ -81,7 +81,7 @@ const wordSchema = new mongoose.Schema<Word, WordModelType>(
     },
     learnedBy: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: [mongoose.Schema.Types.ObjectId],
         default: [],
         required: true,
         ref: 'User',

@@ -4,6 +4,7 @@ import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
 import { learn } from '../algo/learn.js';
 import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
+import Word from '../models/words.js';
 
 const router = express.Router();
 
@@ -71,15 +72,21 @@ router.patch(
       return res.status(400).json({ error: 'invalid user Id' });
     }
 
-    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
+    const wordDoc = await Word.findByIdAndUpdate(wordId, {
+      $addToSet: { learnedBy: new mongoose.Types.ObjectId(userId) },
+    });
+
+    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId) || !wordDoc) {
       return res.status(400).json({ error: 'invalid word Id' });
     }
 
-    let wordDoc = await UserWord.findOne({ userId, wordId });
+    await wordDoc.save();
+
+    let userWordDocument = await UserWord.findOne({ userId, wordId });
 
     let learnResult;
 
-    if (!wordDoc) {
+    if (!userWordDocument) {
       learnResult = learn(
         {
           userId: new mongoose.Types.ObjectId(userId),
@@ -88,16 +95,16 @@ router.patch(
         },
         familiarity
       );
-      wordDoc = new UserWord(learnResult.data);
+      userWordDocument = new UserWord(learnResult.data);
     } else {
-      learnResult = learn(wordDoc.toObject(), familiarity);
-      wordDoc.set(learnResult.data);
+      learnResult = learn(userWordDocument.toObject(), familiarity);
+      userWordDocument.set(learnResult.data);
     }
 
-    const updatedWordDoc = await wordDoc.save();
+    const updatedUserWordDoc = await userWordDocument.save();
 
     const responseData: UpdateFamiliarityResponse = {
-      ...updatedWordDoc.toObject(),
+      ...updatedUserWordDoc.toObject(),
       shouldRepeat: learnResult.shouldRepeat,
     };
 
