@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Error as MongooseError } from 'mongoose';
 
-import User from './models/users.js';
-
 const tokenExtractor = (req: Request, res: Response, next: NextFunction) => {
   const tokenHeader = 'Bearer ';
   const authorization = req.get('authorization');
@@ -23,11 +21,7 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
     if (typeof decodedToken === 'string' || decodedToken instanceof String) {
       return res.status(401).json({ error: 'invalid token format' });
     }
-    const userInDB = await User.findById(decodedToken._id);
-    if (!userInDB) {
-      return res.status(401).json({ error: 'invalid user id' });
-    }
-    res.locals._id = userInDB._id.toString();
+    res.locals._id = decodedToken._id.toString();
     next();
   } catch (error) {
     console.info(error);

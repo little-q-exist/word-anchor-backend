@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 
-import Word, { type Word as WordType, NewWord, WordPopulated } from '../models/words.js';
+import Word, { type Word as WordType, NewWord } from '../models/words.js';
 import UserWord from '../models/userWords.js';
 import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
@@ -46,17 +46,39 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
 router.get('/review', authTokenMiddleware, async (req: Request, res: Response) => {
   const userId = res.locals._id;
 
-  const userData = await UserWord.find({ userId });
-  const overDueData = userData.filter((data) => dayjs(data.dueDate).isSameOrBefore(dayjs(), 'day'));
-  const wordIds = overDueData.map((data) => data.wordId);
-  const wordData = await Word.find({ _id: { $in: wordIds } }).populate('learningData');
-  (wordData as unknown as WordPopulated[]).sort((a, b) => {
-    if (!dayjs(a.learningData[0]!.dueDate).isSame(dayjs(b.learningData[0]!.dueDate), 'day')) {
-      return dayjs(a.learningData[0]!.dueDate).unix() - dayjs(b.learningData[0]!.dueDate).unix();
-    }
-    return a.learningData[0]!.easeFactor - b.learningData[0]!.easeFactor;
+  const endOfDay = dayjs().endOf('day').toISOString();
+
+  const overDueData = await UserWord.find({
+    userId,
+    dueDate: { $lte: endOfDay },
   });
-  res.json(wordData);
+
+  const wordIds = overDueData.map((data) => data.wordId);
+
+  const wordData = await Word.find({ _id: { $in: wordIds } });
+
+  const wordsMap = new Map(wordData.map((word) => [word._id.toString(), word]));
+
+  const result = overDueData
+    .filter((data) => wordsMap.has(data.wordId.toString()))
+    .map((data) => {
+      const word = wordsMap.get(data.wordId.toString())!;
+      return {
+        ...word.toObject(),
+        learningData: data,
+      };
+    })
+    .sort((a, b) => {
+      const dateA = dayjs(a.learningData.dueDate);
+      const dateB = dayjs(b.learningData.dueDate);
+
+      if (!dateA.isSame(dateB, 'day')) {
+        return dateA.unix() - dateB.unix();
+      }
+      return a.learningData.easeFactor - b.learningData.easeFactor;
+    });
+
+  res.json(result);
 });
 
 router.put(
