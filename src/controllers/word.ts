@@ -35,6 +35,11 @@ router.get('/count', async (_req, res) => {
   return res.json(await Word.countDocuments());
 });
 
+router.get('/tags', async (_req, res) => {
+  const tags = await Word.distinct('tags');
+  return res.json(tags.filter(Boolean).sort());
+});
+
 router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) => {
   const { limit = 10 } = req.query;
   const userId = res.locals._id;
