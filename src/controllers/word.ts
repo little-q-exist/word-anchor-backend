@@ -27,8 +27,9 @@ router.get('/', async (req, res) => {
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const data = await Word.find(queryFilter).skip(skip).limit(Number(limit));
-  return res.json(data);
+  const words = await Word.find(queryFilter).skip(skip).limit(Number(limit));
+  const count = await Word.countDocuments(queryFilter);
+  return res.json({ words, count });
 });
 
 router.get('/count', async (_req, res) => {
