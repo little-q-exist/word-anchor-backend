@@ -1,8 +1,8 @@
-# Recite Word Server (背单词网页应用服务端)
+# Word Anchor Server
 
 ## 项目名称与简介
 
-Recite Word Server 是一个专为背单词网页应用（Recite Word）提供核心业务逻辑与数据支撑的后端服务。本项目的核心目标是通过提供稳定、高效的接口，支持科学的单词复习算法（如 SM-2），从而帮助用户根据个人记忆曲线高效地记忆单词，最大化学习效率。
+Word Anchor Server 是一个专为背单词网页应用（Word Anchor）提供核心业务逻辑与数据支撑的后端服务。本项目的核心目标是通过提供稳定、高效的接口，支持科学的单词复习算法（如 SM-2），从而帮助用户根据个人记忆曲线高效地记忆单词，最大化学习效率。
 
 **与前端的协同配合：**
 结合前端（基于 React + Redux + TypeScript 构建的 SPA 应用），本后端应用充当了整个系统的数据大脑。前端通过 Axios 发起 HTTP 请求，后端则负责处理：
@@ -77,8 +77,8 @@ npm install
 在项目根目录创建 `.env` 文件，补充必要的系统配置信息，例如：
 ```env
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/recite_word
-JWT_SECRET=your_super_secret_key_here
+MONGODB_URI=mongodb://your_url
+JWT_SECRET=[your_super_secret_key_here]
 ```
 
 ### 启动开发服务器
