@@ -6,6 +6,7 @@ import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
 import dayjs from 'dayjs';
+import { sendError, sendSuccess } from '../response.js';
 
 const router = express.Router();
 dayjs.extend(isSameOrBefore);
@@ -29,16 +30,16 @@ router.get('/', async (req, res) => {
 
   const words = await Word.find(queryFilter).skip(skip).limit(Number(limit));
   const count = await Word.countDocuments(queryFilter);
-  return res.json({ words, count });
+  return sendSuccess(res, { words, count });
 });
 
 router.get('/count', async (_req, res) => {
-  return res.json(await Word.countDocuments());
+  return sendSuccess(res, await Word.countDocuments());
 });
 
 router.get('/tags', async (_req, res) => {
   const tags = await Word.distinct('tags');
-  return res.json(tags.filter(Boolean).sort());
+  return sendSuccess(res, tags.filter(Boolean).sort());
 });
 
 router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) => {
@@ -46,7 +47,7 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   const userId = res.locals._id;
 
   const words = await Word.find({ learnedBy: { $nin: [userId] } }).limit(Number(limit));
-  res.json(words);
+  return sendSuccess(res, words);
 });
 
 router.get('/review', authTokenMiddleware, async (req: Request, res: Response) => {
@@ -84,18 +85,27 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
       return a.learningData.easeFactor - b.learningData.easeFactor;
     });
 
-  res.json(result);
+  return sendSuccess(res, result);
 });
 
 router.put(
   '/:id',
   authTokenMiddleware,
-  async (req: Request<{ id: string }, unknown, WordType>, res: Response<WordType | null>) => {
+  async (req: Request<{ id: string }, unknown, WordType>, res: Response) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return sendError(res, 400, 'invalid word id');
+    }
+
     const updatedWord = req.body;
     const word = await Word.findByIdAndUpdate(req.params.id, updatedWord, {
       returnOriginal: false,
     });
-    return res.json(word);
+
+    if (!word) {
+      return sendError(res, 404, 'word not found');
+    }
+
+    return sendSuccess(res, word);
   }
 );
 
@@ -104,8 +114,8 @@ router.post(
   authTokenMiddleware,
   async (req: Request<unknown, unknown, NewWord>, res: Response) => {
     const word = { ...req.body, createdBy: new mongoose.Types.ObjectId(res.locals._id) };
-    const newWord = await Word.insertOne(word);
-    return res.json(newWord);
+    const newWord = await new Word(word).save();
+    return sendSuccess(res, newWord, 201, 'word created');
   }
 );
 

@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { learn } from '../algo/learn.js';
 import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
 import Word from '../models/words.js';
+import { sendError, sendSuccess } from '../response.js';
 
 const router = express.Router();
 
@@ -17,10 +18,10 @@ router.get(
   authTokenMiddleware,
   async (req: Request<{ id: string }>, res: Response) => {
     if (req.params.id !== res.locals._id) {
-      return res.status(403).json({ error: 'forbidden' });
+      return sendError(res, 403, 'forbidden');
     }
     const data = await UserWord.find({ userId: req.params.id });
-    res.json(data);
+    return sendSuccess(res, data);
   }
 );
 
@@ -32,12 +33,16 @@ router.get(
     const wordId = req.params.wordId;
     const userId = req.params.userId;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-      return res.status(400).json({ error: 'invalid user Id' });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
     }
 
     if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
-      return res.status(400).json({ error: 'invalid word Id' });
+      return sendError(res, 400, 'invalid word id');
     }
 
     const query = UserWord.findOne({ userId, wordId });
@@ -49,7 +54,7 @@ router.get(
     }
 
     const wordDoc = await query.exec();
-    res.json(wordDoc);
+    return sendSuccess(res, wordDoc);
   }
 );
 
@@ -58,29 +63,35 @@ router.patch(
   authTokenMiddleware,
   async (
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
-    res: Response<UpdateFamiliarityResponse | { error: string }>
+    res: Response
   ) => {
     const familiarity = req.body.familiarity;
     const wordId = req.params.wordId;
     const userId = req.params.userId;
 
     if (![0, 1, 2, 3, 4, 5].includes(familiarity)) {
-      return res.status(400).json({ error: 'invalid familiarity' });
+      return sendError(res, 400, 'invalid familiarity');
     }
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-      return res.status(400).json({ error: 'invalid user Id' });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
+    }
+
+    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
+      return sendError(res, 400, 'invalid word id');
     }
 
     const wordDoc = await Word.findByIdAndUpdate(wordId, {
       $addToSet: { learnedBy: new mongoose.Types.ObjectId(userId) },
     });
 
-    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId) || !wordDoc) {
-      return res.status(400).json({ error: 'invalid word Id' });
+    if (!wordDoc) {
+      return sendError(res, 404, 'word not found');
     }
-
-    await wordDoc.save();
 
     let userWordDocument = await UserWord.findOne({ userId, wordId });
 
@@ -108,7 +119,7 @@ router.patch(
       shouldRepeat: learnResult.shouldRepeat,
     };
 
-    res.json(responseData);
+    return sendSuccess(res, responseData);
   }
 );
 
@@ -119,12 +130,16 @@ router.patch(
     const userId = req.params.userId;
     const wordId = req.params.wordId;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-      return res.status(400).json({ error: 'invalid user Id' });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
     }
 
     if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
-      return res.status(400).json({ error: 'invalid word Id' });
+      return sendError(res, 400, 'invalid word id');
     }
 
     let wordDoc = await UserWord.findOne({ userId, wordId });
@@ -140,7 +155,7 @@ router.patch(
     wordDoc.set('favorited', !wordDoc.favorited);
 
     const updatedWordDoc = await wordDoc.save();
-    res.json({
+    return sendSuccess(res, {
       _id: updatedWordDoc._id,
       wordId: updatedWordDoc.wordId,
       userId: updatedWordDoc.userId,
