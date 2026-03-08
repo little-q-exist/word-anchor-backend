@@ -1,7 +1,8 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 
 import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
+import dayjs from 'dayjs';
 import { learn } from '../algo/learn.js';
 import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
 import Word from '../models/words.js';
@@ -161,6 +162,38 @@ router.patch(
       userId: updatedWordDoc.userId,
       favorited: updatedWordDoc.favorited,
     });
+  }
+);
+
+router.get(
+  '/:userId/stats',
+  authTokenMiddleware,
+  async (req: Request<{ userId: string }>, res: Response, next: NextFunction) => {
+    const userId = req.params.userId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
+    }
+
+    const startOfDay = dayjs().startOf('day').toISOString();
+    const endOfDay = dayjs().endOf('day').toISOString();
+
+    try {
+      const todayCount = await UserWord.countDocuments({
+        userId,
+        lastLearned: { $gte: startOfDay, $lte: endOfDay },
+      });
+
+      const totalCount = await UserWord.countDocuments({ userId });
+
+      return sendSuccess(res, { todayCount, totalCount });
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
