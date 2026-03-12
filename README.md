@@ -64,7 +64,7 @@ recite-word-server/
 
 1. 克隆项目并进入后端目录：
 ```bash
-git clone [your-repo-url]
+git clone git@github.com:little-q-exist/word-anchor-backend.git
 cd recite-word-server
 ```
 
@@ -77,7 +77,7 @@ npm install
 在项目根目录创建 `.env` 文件，补充必要的系统配置信息，例如：
 ```env
 PORT=3000
-MONGODB_URI=mongodb://your_url
+MONGODB_URI=mongodb+srv://<db_username>:<db_password>@cluster0.ifobgfn.mongodb.net/reciteWord?appName=Cluster0
 JWT_SECRET=[your_super_secret_key_here]
 ```
 
