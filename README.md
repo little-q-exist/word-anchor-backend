@@ -78,7 +78,7 @@ npm install
 ```env
 PORT=3000
 MONGODB_URI=mongodb+srv://<db_username>:<db_password>@cluster0.ifobgfn.mongodb.net/reciteWord?appName=Cluster0
-JWT_SECRET=[your_super_secret_key_here]
+SECRET=[your_super_secret_key_here]
 ```
 
 ### 启动开发服务器
