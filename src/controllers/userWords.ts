@@ -21,7 +21,7 @@ router.get(
     if (req.params.id !== res.locals._id) {
       return sendError(res, 403, 'forbidden');
     }
-    const data = await UserWord.find({ userId: req.params.id });
+    const data = await UserWord.find({ userId: req.params.id }).lean();
     return sendSuccess(res, data);
   }
 );

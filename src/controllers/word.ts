@@ -33,6 +33,11 @@ router.get('/', async (req, res) => {
   return sendSuccess(res, { words, count });
 });
 
+router.get('/:id', async (req, res) => {
+  const id = req.params.id;
+  return sendSuccess(res, await Word.findById(id).lean());
+});
+
 router.get('/count', async (_req, res) => {
   return sendSuccess(res, await Word.countDocuments());
 });
