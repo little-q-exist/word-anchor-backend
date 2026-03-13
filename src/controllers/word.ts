@@ -46,7 +46,9 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   const { limit = 10 } = req.query;
   const userId = res.locals._id;
 
-  const words = await Word.find({ learnedBy: { $nin: [userId] } }).limit(Number(limit));
+  const words = await Word.find({ learnedBy: { $nin: [userId] } }, '_id english')
+    .limit(Number(limit))
+    .lean();
   return sendSuccess(res, words);
 });
 
@@ -55,37 +57,14 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
 
   const endOfDay = dayjs().endOf('day').toISOString();
 
-  const overDueData = await UserWord.find({
+  const overDueDataIds = await UserWord.find({
     userId,
     dueDate: { $lte: endOfDay },
-  });
+  })
+    .sort({ dueDate: 'asc', easeFactor: 'asc' })
+    .select('wordId english');
 
-  const wordIds = overDueData.map((data) => data.wordId);
-
-  const wordData = await Word.find({ _id: { $in: wordIds } });
-
-  const wordsMap = new Map(wordData.map((word) => [word._id.toString(), word]));
-
-  const result = overDueData
-    .filter((data) => wordsMap.has(data.wordId.toString()))
-    .map((data) => {
-      const word = wordsMap.get(data.wordId.toString())!;
-      return {
-        ...word.toObject(),
-        learningData: data,
-      };
-    })
-    .sort((a, b) => {
-      const dateA = dayjs(a.learningData.dueDate);
-      const dateB = dayjs(b.learningData.dueDate);
-
-      if (!dateA.isSame(dateB, 'day')) {
-        return dateA.unix() - dateB.unix();
-      }
-      return a.learningData.easeFactor - b.learningData.easeFactor;
-    });
-
-  return sendSuccess(res, result);
+  return sendSuccess(res, overDueDataIds);
 });
 
 router.put(
