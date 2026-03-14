@@ -103,6 +103,7 @@ router.patch(
         {
           userId: new mongoose.Types.ObjectId(userId),
           wordId: new mongoose.Types.ObjectId(wordId),
+          english: wordDoc.english,
           ...defaultUserLearningData,
         },
         familiarity
@@ -143,19 +144,26 @@ router.patch(
       return sendError(res, 400, 'invalid word id');
     }
 
-    let wordDoc = await UserWord.findOne({ userId, wordId });
+    let userWordDoc = await UserWord.findOne({ userId, wordId });
+
+    const wordDoc = await Word.findById(wordId).select('english').lean();
 
     if (!wordDoc) {
-      wordDoc = new UserWord({
+      return sendError(res, 404, 'word not found');
+    }
+
+    if (!userWordDoc) {
+      userWordDoc = new UserWord({
         ...defaultUserLearningData,
         userId: new mongoose.Types.ObjectId(userId),
         wordId: new mongoose.Types.ObjectId(wordId),
+        english: wordDoc.english,
       });
     }
 
-    wordDoc.set('favorited', !wordDoc.favorited);
+    userWordDoc.set('favorited', !userWordDoc.favorited);
 
-    const updatedWordDoc = await wordDoc.save();
+    const updatedWordDoc = await userWordDoc.save();
     return sendSuccess(res, {
       _id: updatedWordDoc._id,
       wordId: updatedWordDoc.wordId,

@@ -33,11 +33,6 @@ router.get('/', async (req, res) => {
   return sendSuccess(res, { words, count });
 });
 
-router.get('/:id', async (req, res) => {
-  const id = req.params.id;
-  return sendSuccess(res, await Word.findById(id).lean());
-});
-
 router.get('/count', async (_req, res) => {
   return sendSuccess(res, await Word.countDocuments());
 });
@@ -51,9 +46,9 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   const { limit = 10 } = req.query;
   const userId = res.locals._id;
 
-  const words = await Word.find({ learnedBy: { $nin: [userId] } }, '_id english')
-    .limit(Number(limit))
-    .lean();
+  const words = await Word.find({ learnedBy: { $nin: [userId] } }, '_id english').limit(
+    Number(limit)
+  );
   return sendSuccess(res, words);
 });
 
@@ -67,9 +62,15 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
     dueDate: { $lte: endOfDay },
   })
     .sort({ dueDate: 'asc', easeFactor: 'asc' })
-    .select('wordId english');
+    .select('wordId english')
+    .lean();
 
   return sendSuccess(res, overDueDataIds);
+});
+
+router.get('/:id', async (req, res) => {
+  const id = req.params.id;
+  return sendSuccess(res, await Word.findById(id).lean());
 });
 
 router.put(
