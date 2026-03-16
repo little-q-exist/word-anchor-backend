@@ -46,10 +46,16 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   const { limit = 10 } = req.query;
   const userId = res.locals._id;
 
-  const words = await Word.find({ learnedBy: { $nin: [userId] } }, '_id english').limit(
-    Number(limit)
-  );
-  return sendSuccess(res, words);
+  const learnedWordIds = await UserWord.find({ userId }).distinct('wordId');
+
+  const words = await Word.find({ _id: { $nin: learnedWordIds } }, '_id english')
+    .limit(Number(limit))
+    .lean();
+
+  return sendSuccess(res, {
+    mode: 'learn',
+    wordIds: words.map((word) => ({ _id: word._id, english: word.english })),
+  });
 });
 
 router.get('/review', authTokenMiddleware, async (req: Request, res: Response) => {
@@ -65,7 +71,10 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
     .select('wordId english')
     .lean();
 
-  return sendSuccess(res, overDueDataIds);
+  return sendSuccess(res, {
+    mode: 'review',
+    wordIds: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english })),
+  });
 });
 
 router.get('/:id', async (req, res) => {
