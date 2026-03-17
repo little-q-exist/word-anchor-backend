@@ -3,6 +3,12 @@ import jwt from 'jsonwebtoken';
 import { Error as MongooseError } from 'mongoose';
 import { ApiError, sendError } from './response.js';
 
+const JWT_SECRET = process.env.SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT secret is not set. Please define the SECRET environment variable.');
+}
+
 const tokenExtractor = (req: Request, res: Response, next: NextFunction) => {
   const tokenHeader = 'Bearer ';
   const authorization = req.get('authorization');
@@ -18,7 +24,7 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
     return sendError(res, 401, 'invalid token');
   }
   try {
-    const decodedToken = jwt.verify(token, process.env.SECRET || 'SECRET');
+    const decodedToken = jwt.verify(token, JWT_SECRET);
     if (typeof decodedToken === 'string' || decodedToken instanceof String) {
       return sendError(res, 401, 'invalid token format');
     }
@@ -63,7 +69,6 @@ export const classErrorHandler = (
       value: error.value,
     });
   } else {
-    console.error(error);
     return sendError(res, 500, 'internal server error');
   }
 };

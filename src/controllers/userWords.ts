@@ -110,7 +110,11 @@ router.patch(
       );
       userWordDocument = new UserWord(learnResult.data);
     } else {
-      learnResult = learn(userWordDocument.toObject(), familiarity);
+      const userLearningData = userWordDocument.toObject();
+      if (!userLearningData.english && wordDoc.english) {
+        userLearningData.english = wordDoc.english;
+      }
+      learnResult = learn(userLearningData, familiarity);
       userWordDocument.set(learnResult.data);
     }
 

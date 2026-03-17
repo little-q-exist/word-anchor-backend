@@ -79,7 +79,18 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
 
 router.get('/:id', async (req, res) => {
   const id = req.params.id;
-  return sendSuccess(res, await Word.findById(id).lean());
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return sendError(res, 400, 'invalid word id');
+  }
+
+  const word = await Word.findById(id).lean();
+
+  if (!word) {
+    return sendError(res, 404, 'word not found');
+  }
+
+  return sendSuccess(res, word);
 });
 
 router.put(

@@ -13,13 +13,15 @@ router.post('/', async (req, res) => {
   const userInDB = await User.findOne({ username: username }).select('+passwordHash');
 
   if (!userInDB) {
-    return sendError(res, 401, 'invalid username');
+    console.warn(`Failed login attempt for non-existent username: ${username}`);
+    return sendError(res, 401, 'invalid credentials');
   }
 
   const passwordCorrect = await bcrypt.compare(password, userInDB.passwordHash);
 
   if (!passwordCorrect) {
-    return sendError(res, 401, 'invalid password');
+    console.warn(`Failed login attempt for username: ${username} with invalid password`);
+    return sendError(res, 401, 'invalid credentials');
   }
 
   const token = jwt.sign({ username, _id: userInDB._id }, process.env.SECRET || 'SECRET');

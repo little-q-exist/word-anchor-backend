@@ -19,7 +19,7 @@ export class ApiError extends Error {
 }
 
 export const sendSuccess = <T>(
-  res: Response<StandardResponse>,
+  res: Response<StandardResponse<T>>,
   data: T,
   statusCode = 200,
   message = 'success'
@@ -31,11 +31,11 @@ export const sendSuccess = <T>(
   });
 };
 
-export const sendError = (
-  res: Response<StandardResponse>,
+export const sendError = <T = unknown>(
+  res: Response<StandardResponse<T | null>>,
   statusCode: number,
   message: string,
-  data: unknown = null
+  data: T | null = null
 ) => {
   return res.status(statusCode).json({
     code: statusCode,
