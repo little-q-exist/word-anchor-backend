@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Error as MongooseError } from 'mongoose';
+import { ApiError, sendError } from './response.js';
+
+const JWT_SECRET = process.env.SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT secret is not set. Please define the SECRET environment variable.');
+}
 
 const tokenExtractor = (req: Request, res: Response, next: NextFunction) => {
   const tokenHeader = 'Bearer ';
@@ -14,12 +21,12 @@ const tokenExtractor = (req: Request, res: Response, next: NextFunction) => {
 const tokenAuthenticator = async (req: Request, res: Response, next: NextFunction) => {
   const token = res.locals.token;
   if (!token) {
-    return res.status(401).json({ error: 'invalid token' });
+    return sendError(res, 401, 'invalid token');
   }
   try {
-    const decodedToken = jwt.verify(token, process.env.SECRET || 'SECRET');
+    const decodedToken = jwt.verify(token, JWT_SECRET);
     if (typeof decodedToken === 'string' || decodedToken instanceof String) {
-      return res.status(401).json({ error: 'invalid token format' });
+      return sendError(res, 401, 'invalid token format');
     }
     res.locals._id = decodedToken._id.toString();
     next();
@@ -37,7 +44,7 @@ const tokenAuthenticator = async (req: Request, res: Response, next: NextFunctio
 export const authTokenMiddleware = [tokenExtractor, tokenAuthenticator];
 
 export const unknownEndPoint = (_req: Request, res: Response) => {
-  return res.status(404).json({ error: 'unknown endpoint' });
+  return sendError(res, 404, 'unknown endpoint');
 };
 
 export const classErrorHandler = (
@@ -47,13 +54,22 @@ export const classErrorHandler = (
   _next: NextFunction
 ) => {
   console.error(error);
+  if (error instanceof ApiError) {
+    return sendError(res, error.statusCode, error.message, error.data);
+  }
+
   if (error instanceof jwt.JsonWebTokenError) {
-    return res.status(401).json({ error: { name: error.name, message: error.message } });
+    return sendError(res, 401, error.message, { name: error.name });
   } else if (error instanceof MongooseError.ValidationError) {
-    return res.status(400).json({ error: { name: error.name, errors: error.errors } });
+    return sendError(res, 400, 'validation failed', { name: error.name, errors: error.errors });
+  } else if (error instanceof MongooseError.CastError) {
+    return sendError(res, 400, 'invalid id', {
+      name: error.name,
+      path: error.path,
+      value: error.value,
+    });
   } else {
-    console.error(error);
-    res.status(500).json({ error: 'internal server error' });
+    return sendError(res, 500, 'internal server error');
   }
 };
 

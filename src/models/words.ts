@@ -79,6 +79,11 @@ const wordSchema = new mongoose.Schema<Word, WordModelType>(
       required: true,
       ref: 'User',
     },
+    /**
+     * @deprecated
+     * learnedBy is no longer used for '/learn' interface.
+     * kept only for backward-compatibility.
+     */
     learnedBy: [
       {
         type: [mongoose.Schema.Types.ObjectId],
@@ -102,6 +107,24 @@ wordSchema.virtual('learningData', {
 
 export interface WordPopulated extends Word {
   learningData: UserLearningData[];
+}
+
+export interface BriefWord {
+  _id: mongoose.Types.ObjectId;
+  english: string;
+}
+
+export interface BriefWordListWithMode {
+  /**
+   * List of brief word objects in the selected mode.
+   */
+  words: BriefWord[];
+  /**
+   * @deprecated Use `words` instead. This field contains full `BriefWord` objects,
+   * not IDs. It is kept only for backward compatibility.
+   */
+  wordIds?: BriefWord[];
+  mode: 'learn' | 'review';
 }
 
 export default mongoose.model('Word', wordSchema);

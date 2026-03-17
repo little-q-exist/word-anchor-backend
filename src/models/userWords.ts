@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 export interface UserLearningData {
   userId: mongoose.Types.ObjectId;
   wordId: mongoose.Types.ObjectId;
+  english: string;
   easeFactor: number;
   lastLearned: string;
   interval: number;
@@ -24,6 +25,7 @@ export const defaultUserLearningData = {
 const userWordSchema = new mongoose.Schema<UserLearningData>({
   userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
   wordId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Word' },
+  english: { type: String, required: true },
   easeFactor: { type: Number, required: true, default: 2.5 },
   lastLearned: { type: String, required: true, default: () => dayjs().toISOString() },
   interval: { type: Number, required: true, default: 0 },

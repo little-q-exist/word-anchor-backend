@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
 import User from '../models/users.js';
+import { sendError, sendSuccess } from '../response.js';
 
 const router = express.Router();
 
@@ -12,18 +13,20 @@ router.post('/', async (req, res) => {
   const userInDB = await User.findOne({ username: username }).select('+passwordHash');
 
   if (!userInDB) {
-    return res.status(400).json({ error: 'invalid username' });
+    console.warn(`Failed login attempt for non-existent username: ${username}`);
+    return sendError(res, 401, 'invalid credentials');
   }
 
   const passwordCorrect = await bcrypt.compare(password, userInDB.passwordHash);
 
   if (!passwordCorrect) {
-    return res.status(400).json({ error: 'invalid password' });
+    console.warn(`Failed login attempt for username: ${username} with invalid password`);
+    return sendError(res, 401, 'invalid credentials');
   }
 
   const token = jwt.sign({ username, _id: userInDB._id }, process.env.SECRET || 'SECRET');
 
-  res.json({ token, username, _id: userInDB._id });
+  return sendSuccess(res, { token, username, _id: userInDB._id }, 200, 'login successful');
 });
 
 export default router;

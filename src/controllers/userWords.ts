@@ -1,10 +1,12 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 
 import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
+import dayjs from 'dayjs';
 import { learn } from '../algo/learn.js';
 import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
 import Word from '../models/words.js';
+import { sendError, sendSuccess } from '../response.js';
 
 const router = express.Router();
 
@@ -17,10 +19,10 @@ router.get(
   authTokenMiddleware,
   async (req: Request<{ id: string }>, res: Response) => {
     if (req.params.id !== res.locals._id) {
-      return res.status(403).json({ error: 'forbidden' });
+      return sendError(res, 403, 'forbidden');
     }
-    const data = await UserWord.find({ userId: req.params.id });
-    res.json(data);
+    const data = await UserWord.find({ userId: req.params.id }).lean();
+    return sendSuccess(res, data);
   }
 );
 
@@ -32,12 +34,16 @@ router.get(
     const wordId = req.params.wordId;
     const userId = req.params.userId;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-      return res.status(400).json({ error: 'invalid user Id' });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
     }
 
     if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
-      return res.status(400).json({ error: 'invalid word Id' });
+      return sendError(res, 400, 'invalid word id');
     }
 
     const query = UserWord.findOne({ userId, wordId });
@@ -49,7 +55,7 @@ router.get(
     }
 
     const wordDoc = await query.exec();
-    res.json(wordDoc);
+    return sendSuccess(res, wordDoc);
   }
 );
 
@@ -58,29 +64,35 @@ router.patch(
   authTokenMiddleware,
   async (
     req: Request<{ userId: string; wordId: string }, unknown, { familiarity: number }>,
-    res: Response<UpdateFamiliarityResponse | { error: string }>
+    res: Response
   ) => {
     const familiarity = req.body.familiarity;
     const wordId = req.params.wordId;
     const userId = req.params.userId;
 
     if (![0, 1, 2, 3, 4, 5].includes(familiarity)) {
-      return res.status(400).json({ error: 'invalid familiarity' });
+      return sendError(res, 400, 'invalid familiarity');
     }
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-      return res.status(400).json({ error: 'invalid user Id' });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
+    }
+
+    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
+      return sendError(res, 400, 'invalid word id');
     }
 
     const wordDoc = await Word.findByIdAndUpdate(wordId, {
       $addToSet: { learnedBy: new mongoose.Types.ObjectId(userId) },
     });
 
-    if (!wordId || !mongoose.Types.ObjectId.isValid(wordId) || !wordDoc) {
-      return res.status(400).json({ error: 'invalid word Id' });
+    if (!wordDoc) {
+      return sendError(res, 404, 'word not found');
     }
-
-    await wordDoc.save();
 
     let userWordDocument = await UserWord.findOne({ userId, wordId });
 
@@ -91,13 +103,18 @@ router.patch(
         {
           userId: new mongoose.Types.ObjectId(userId),
           wordId: new mongoose.Types.ObjectId(wordId),
+          english: wordDoc.english,
           ...defaultUserLearningData,
         },
         familiarity
       );
       userWordDocument = new UserWord(learnResult.data);
     } else {
-      learnResult = learn(userWordDocument.toObject(), familiarity);
+      const userLearningData = userWordDocument.toObject();
+      if (!userLearningData.english && wordDoc.english) {
+        userLearningData.english = wordDoc.english;
+      }
+      learnResult = learn(userLearningData, familiarity);
       userWordDocument.set(learnResult.data);
     }
 
@@ -108,7 +125,7 @@ router.patch(
       shouldRepeat: learnResult.shouldRepeat,
     };
 
-    res.json(responseData);
+    return sendSuccess(res, responseData);
   }
 );
 
@@ -119,33 +136,83 @@ router.patch(
     const userId = req.params.userId;
     const wordId = req.params.wordId;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || userId !== res.locals._id) {
-      return res.status(400).json({ error: 'invalid user Id' });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
     }
 
     if (!wordId || !mongoose.Types.ObjectId.isValid(wordId)) {
-      return res.status(400).json({ error: 'invalid word Id' });
+      return sendError(res, 400, 'invalid word id');
     }
 
-    let wordDoc = await UserWord.findOne({ userId, wordId });
+    let userWordDoc = await UserWord.findOne({ userId, wordId });
+
+    const wordDoc = await Word.findById(wordId).select('english').lean();
 
     if (!wordDoc) {
-      wordDoc = new UserWord({
-        ...defaultUserLearningData,
+      return sendError(res, 404, 'word not found');
+    }
+
+    /* 
+      TODO: bug to fix.
+      When creating a new UserWord on the favorite endpoint,
+      spreading defaultUserLearningData will also set lastLearned/dueDate from the module-level constant values (computed at import time),
+      overriding the schema defaults.
+      That can make these timestamps stale/incorrect (and will affect /stats which uses lastLearned).
+      Consider switching defaultUserLearningData to a factory function (computed per request) or omitting date fields here so schema defaults apply.
+    */
+    if (!userWordDoc) {
+      userWordDoc = new UserWord({
         userId: new mongoose.Types.ObjectId(userId),
         wordId: new mongoose.Types.ObjectId(wordId),
+        english: wordDoc.english,
       });
     }
 
-    wordDoc.set('favorited', !wordDoc.favorited);
+    userWordDoc.set('favorited', !userWordDoc.favorited);
 
-    const updatedWordDoc = await wordDoc.save();
-    res.json({
+    const updatedWordDoc = await userWordDoc.save();
+    return sendSuccess(res, {
       _id: updatedWordDoc._id,
       wordId: updatedWordDoc.wordId,
       userId: updatedWordDoc.userId,
       favorited: updatedWordDoc.favorited,
     });
+  }
+);
+
+router.get(
+  '/:userId/stats',
+  authTokenMiddleware,
+  async (req: Request<{ userId: string }>, res: Response, next: NextFunction) => {
+    const userId = req.params.userId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
+    }
+
+    const startOfDay = dayjs().startOf('day').toISOString();
+    const endOfDay = dayjs().endOf('day').toISOString();
+
+    try {
+      const todayCount = await UserWord.countDocuments({
+        userId,
+        lastLearned: { $gte: startOfDay, $lte: endOfDay },
+      });
+
+      const totalCount = await UserWord.countDocuments({ userId });
+
+      return sendSuccess(res, { todayCount, totalCount });
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
