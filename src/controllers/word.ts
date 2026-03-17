@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 
-import Word, { type Word as WordType, NewWord } from '../models/words.js';
+import Word, { type Word as WordType, NewWord, BriefWordListWithMode } from '../models/words.js';
 import UserWord from '../models/userWords.js';
 import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
@@ -52,9 +52,9 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
     .limit(Number(limit))
     .lean();
 
-  return sendSuccess(res, {
+  return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'learn',
-    wordIds: words.map((word) => ({ _id: word._id, english: word.english })),
+    words: words.map((word) => ({ _id: word._id, english: word.english })),
   });
 });
 
@@ -71,9 +71,9 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
     .select('wordId english')
     .lean();
 
-  return sendSuccess(res, {
+  return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'review',
-    wordIds: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english })),
+    words: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english })),
   });
 });
 
