@@ -79,6 +79,11 @@ const wordSchema = new mongoose.Schema<Word, WordModelType>(
       required: true,
       ref: 'User',
     },
+    /**
+     * @deprecated
+     * learnedBy is no longer used for '/learn' interface.
+     * kept only for backward-compatibility.
+     */
     learnedBy: [
       {
         type: [mongoose.Schema.Types.ObjectId],
