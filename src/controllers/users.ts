@@ -29,8 +29,20 @@ router.get('/:id', authTokenMiddleware, async (req: Request<{ id: string }>, res
   return sendSuccess(res, data);
 });
 
+router.get('/:username/existence', async (req: Request<{ username: string }>, res: Response) => {
+  const exist = await User.exists({ username: req.params.username });
+  return sendSuccess(res, { exist: !!exist });
+});
+
 router.post('/register', async (req: Request<unknown, unknown, NewUser>, res: Response) => {
   const { username, password, email = '' } = req.body;
+
+  const userExist = await User.exists({ username });
+
+  if (userExist) {
+    return sendError(res, 400, 'username already exists');
+  }
+
   const saltRound = 13;
   const passwordHash = await bcrypt.hash(password, saltRound);
   const newUser = await new User({ username, passwordHash, email }).save();
