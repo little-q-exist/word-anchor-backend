@@ -30,8 +30,8 @@ router.get('/:id', authTokenMiddleware, async (req: Request<{ id: string }>, res
 });
 
 router.get('/:username/existence', async (req: Request<{ username: string }>, res: Response) => {
-  const exist = await User.exists({ username: req.params.username });
-  return sendSuccess(res, { exist: !!exist });
+  const exists = await User.exists({ username: req.params.username });
+  return sendSuccess(res, { exists: !!exists });
 });
 
 router.post('/register', async (req: Request<unknown, unknown, NewUser>, res: Response) => {
