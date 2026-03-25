@@ -207,7 +207,7 @@ router.get(
         lastLearned: { $gte: startOfDay, $lte: endOfDay },
       });
 
-      const totalCount = await UserWord.countDocuments({ userId });
+      const totalCount = await UserWord.countDocuments({ userId, lastLearned: { $exists: true } });
 
       return sendSuccess(res, { todayCount, totalCount });
     } catch (error) {

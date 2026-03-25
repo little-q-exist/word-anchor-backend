@@ -27,9 +27,9 @@ const userWordSchema = new mongoose.Schema<UserLearningData>({
   wordId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Word' },
   english: { type: String, required: true },
   easeFactor: { type: Number, required: true, default: 2.5 },
-  lastLearned: { type: String, required: true, default: () => dayjs().toISOString() },
+  lastLearned: { type: String },
   interval: { type: Number, required: true, default: 0 },
-  dueDate: { type: String, required: true, default: () => dayjs().toISOString() },
+  dueDate: { type: String },
   repetition: { type: Number, required: true, default: 0 },
   favorited: { type: Boolean, required: true, default: false },
 });
