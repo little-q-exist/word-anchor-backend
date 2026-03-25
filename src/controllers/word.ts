@@ -28,9 +28,12 @@ router.get('/', async (req, res) => {
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const words = await Word.find(queryFilter).skip(skip).limit(Number(limit));
+  const words = await Word.find(queryFilter)
+    .select('english definitions phonetic')
+    .skip(skip)
+    .limit(Number(limit));
   const count = await Word.countDocuments(queryFilter);
-  return sendSuccess(res, { words, count });
+  return sendSuccess(res, { words, count, pageCount: words.length });
 });
 
 router.get('/count', async (_req, res) => {
