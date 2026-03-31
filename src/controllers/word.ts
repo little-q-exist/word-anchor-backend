@@ -28,9 +28,12 @@ router.get('/', async (req, res) => {
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const words = await Word.find(queryFilter).skip(skip).limit(Number(limit));
+  const words = await Word.find(queryFilter)
+    .select('english definitions phonetic')
+    .skip(skip)
+    .limit(Number(limit));
   const count = await Word.countDocuments(queryFilter);
-  return sendSuccess(res, { words, count });
+  return sendSuccess(res, { words, count, pageSize: words.length });
 });
 
 router.get('/count', async (_req, res) => {
@@ -46,7 +49,9 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   const { limit = 10 } = req.query;
   const userId = res.locals._id;
 
-  const learnedWordIds = await UserWord.find({ userId }).distinct('wordId');
+  const learnedWordIds = await UserWord.find({ userId, lastLearned: { $exists: true } }).distinct(
+    'wordId'
+  );
 
   const words = await Word.find({ _id: { $nin: learnedWordIds } }, '_id english')
     .limit(Number(limit))
@@ -55,6 +60,7 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
   return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'learn',
     words: words.map((word) => ({ _id: word._id, english: word.english })),
+    count: words.length,
   });
 });
 
@@ -74,6 +80,7 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
   return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'review',
     words: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english })),
+    count: overDueDataIds.length,
   });
 });
 

@@ -125,6 +125,7 @@ export interface BriefWordListWithMode {
    */
   wordIds?: BriefWord[];
   mode: 'learn' | 'review';
+  count: number;
 }
 
 export default mongoose.model('Word', wordSchema);

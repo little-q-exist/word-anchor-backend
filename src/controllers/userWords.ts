@@ -4,7 +4,10 @@ import { authTokenMiddleware } from '../middleware.js';
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
 import { learn } from '../algo/learn.js';
-import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
+import UserWord, {
+  UserLearningData,
+  defaultUserLearningData,
+} from '../models/userWords.js';
 import Word from '../models/words.js';
 import { sendError, sendSuccess } from '../response.js';
 
@@ -156,14 +159,6 @@ router.patch(
       return sendError(res, 404, 'word not found');
     }
 
-    /* 
-      TODO: bug to fix.
-      When creating a new UserWord on the favorite endpoint,
-      spreading defaultUserLearningData will also set lastLearned/dueDate from the module-level constant values (computed at import time),
-      overriding the schema defaults.
-      That can make these timestamps stale/incorrect (and will affect /stats which uses lastLearned).
-      Consider switching defaultUserLearningData to a factory function (computed per request) or omitting date fields here so schema defaults apply.
-    */
     if (!userWordDoc) {
       userWordDoc = new UserWord({
         userId: new mongoose.Types.ObjectId(userId),
@@ -207,7 +202,7 @@ router.get(
         lastLearned: { $gte: startOfDay, $lte: endOfDay },
       });
 
-      const totalCount = await UserWord.countDocuments({ userId });
+      const totalCount = await UserWord.countDocuments({ userId, lastLearned: { $exists: true } });
 
       return sendSuccess(res, { todayCount, totalCount });
     } catch (error) {
