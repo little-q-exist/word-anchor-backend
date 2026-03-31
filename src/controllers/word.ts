@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
     .skip(skip)
     .limit(Number(limit));
   const count = await Word.countDocuments(queryFilter);
-  return sendSuccess(res, { words, count, pageCount: words.length });
+  return sendSuccess(res, { words, count, pageSize: words.length });
 });
 
 router.get('/count', async (_req, res) => {
