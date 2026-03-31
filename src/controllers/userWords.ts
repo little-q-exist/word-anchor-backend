@@ -156,14 +156,6 @@ router.patch(
       return sendError(res, 404, 'word not found');
     }
 
-    /* 
-      TODO: bug to fix.
-      When creating a new UserWord on the favorite endpoint,
-      spreading defaultUserLearningData will also set lastLearned/dueDate from the module-level constant values (computed at import time),
-      overriding the schema defaults.
-      That can make these timestamps stale/incorrect (and will affect /stats which uses lastLearned).
-      Consider switching defaultUserLearningData to a factory function (computed per request) or omitting date fields here so schema defaults apply.
-    */
     if (!userWordDoc) {
       userWordDoc = new UserWord({
         userId: new mongoose.Types.ObjectId(userId),
