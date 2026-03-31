@@ -1,23 +1,20 @@
 import mongoose from 'mongoose';
-import dayjs from 'dayjs';
 
 export interface UserLearningData {
   userId: mongoose.Types.ObjectId;
   wordId: mongoose.Types.ObjectId;
   english: string;
   easeFactor: number;
-  lastLearned: string;
+  lastLearned?: string;
   interval: number;
-  dueDate: string;
+  dueDate?: string;
   repetition: number;
   favorited: boolean;
 }
 
 export const defaultUserLearningData = {
   easeFactor: 2.5,
-  lastLearned: dayjs(Date.now()).toISOString(),
   interval: 0,
-  dueDate: dayjs(Date.now()).toISOString(),
   repetition: 0,
   favorited: false,
 };
