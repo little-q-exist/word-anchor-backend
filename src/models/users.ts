@@ -14,7 +14,7 @@ export interface User {
 }
 
 const userSchema = new mongoose.Schema<User>({
-  username: { type: String, required: true, index: 1, unique: true },
+  username: { type: String, required: true, index: true, unique: true },
   email: String,
   passwordHash: { type: String, required: true, select: false },
   isAdmin: { type: Boolean, required: true, default: false },
