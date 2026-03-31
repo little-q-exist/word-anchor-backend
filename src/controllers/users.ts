@@ -31,6 +31,13 @@ router.get('/:id', authTokenMiddleware, async (req: Request<{ id: string }>, res
 
 router.get('/:username/existence', async (req: Request<{ username: string }>, res: Response) => {
   const exists = await User.exists({ username: req.params.username });
+  /*
+    TODO: This endpoint leaks whether a username is registered,
+    which enables user enumeration.
+    If it’s required for UX, consider adding rate limiting/throttling,
+    normalization (trim/lowercase if applicable),
+    and/or returning a less directly enumerable response (or requiring auth) to reduce abuse risk.
+  */
   return sendSuccess(res, { exists: !!exists });
 });
 
