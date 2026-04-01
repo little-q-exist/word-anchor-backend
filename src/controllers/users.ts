@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/', authTokenMiddleware, async (_req: Request, res: Response) => {
   const user = await User.findById(res.locals._id);
   if (user && user.isAdmin) {
-    const data = await User.find({}).select('+passwordHash');
+    const data = await User.find({});
     return sendSuccess(res, data);
   } else {
     return sendError(res, 403, 'forbidden');

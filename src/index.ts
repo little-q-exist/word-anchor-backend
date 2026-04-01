@@ -24,9 +24,14 @@ mongoose
   .connect(MONGODB_URI)
   .then(() => {
     console.info('successful connected');
+    app.listen(PORT, () => {
+      console.info(`Server is running at ${SERVER_URL}/words`);
+      console.info(`Server is running at ${SERVER_URL}/users`);
+    });
   })
   .catch((error) => {
     console.error('failed to connect', error);
+    process.exit(1);
   });
 
 app.use(requestLogger);
@@ -42,8 +47,3 @@ app.use('/api/users', userWordRouter);
 
 app.use(unknownEndPoint);
 app.use(classErrorHandler);
-
-app.listen(PORT, () => {
-  console.info(`Server is running at ${SERVER_URL}/words`);
-  console.info(`Server is running at ${SERVER_URL}/users`);
-});

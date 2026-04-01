@@ -75,9 +75,8 @@ export const classErrorHandler = (
 
 export const requestLogger = (req: Request, _res: Response, next: NextFunction) => {
   if (req.method !== 'GET') {
-    console.info(req.url);
     console.info(req.method);
-    console.info(req.body);
+    console.info(req.path);
     console.info('====');
   }
   next();

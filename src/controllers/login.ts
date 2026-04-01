@@ -24,7 +24,13 @@ router.post('/', async (req, res) => {
     return sendError(res, 401, 'invalid credentials');
   }
 
-  const token = jwt.sign({ username, _id: userInDB._id }, process.env.SECRET || 'SECRET');
+  const secret = process.env.SECRET;
+  if (!secret) {
+    console.error('SECRET environment variable is not set');
+    return sendError(res, 500, 'internal server error');
+  }
+
+  const token = jwt.sign({ username, _id: userInDB._id }, secret, { expiresIn: '30d' });
 
   return sendSuccess(res, { token, username, _id: userInDB._id }, 200, 'login successful');
 });
