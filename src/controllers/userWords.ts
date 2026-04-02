@@ -89,9 +89,7 @@ router.patch(
       return sendError(res, 400, 'invalid word id');
     }
 
-    const wordDoc = await Word.findByIdAndUpdate(wordId, {
-      $addToSet: { learnedBy: new mongoose.Types.ObjectId(userId) },
-    });
+    const wordDoc = await Word.findById(wordId).select('english').lean();
 
     if (!wordDoc) {
       return sendError(res, 404, 'word not found');
