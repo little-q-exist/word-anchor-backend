@@ -3,10 +3,10 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import 'dotenv/config';
 
-import wordRouter from './controllers/word.js';
-import userRouter from './controllers/users.js';
-import loginRouter from './controllers/login.js';
-import userWordRouter from './controllers/userWords.js';
+import wordRouter from './modules/words/word.js';
+import userRouter from './modules/users/users.js';
+import loginRouter from './modules/auth/login.js';
+import userWordRouter from './modules/users/userWords.js';
 import { unknownEndPoint, classErrorHandler, requestLogger } from './middleware.js';
 
 import { SERVER_URL } from './constants.js';
