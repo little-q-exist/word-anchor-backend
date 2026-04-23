@@ -6,6 +6,7 @@ import 'dotenv/config';
 import wordRouter from './modules/words/word.js';
 import userRouter from './modules/users/users.js';
 import loginRouter from './modules/auth/login.js';
+import registerRouter from './modules/auth/register.js';
 import userWordRouter from './modules/users/userWords.js';
 import { unknownEndPoint, classErrorHandler, requestLogger } from './middleware.js';
 
@@ -42,6 +43,7 @@ app.get('/', (_req, res) => {
 
 app.use('/api/words', wordRouter);
 app.use('/api/users', userRouter);
+app.use('/api/users', registerRouter);
 app.use('/api/login', loginRouter);
 app.use('/api/users', userWordRouter);
 
