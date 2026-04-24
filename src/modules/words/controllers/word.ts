@@ -1,12 +1,12 @@
 import express, { Request, Response } from 'express';
 
 import Word, { type Word as WordType, NewWord, BriefWordListWithMode } from '../models/words.js';
-import UserWord from '../../learn/models/userWords.js';
-import { authTokenMiddleware } from '../../../middleware.js';
+import UserWord from '#modules/learn/models/userWords.js';
+import { authTokenMiddleware } from '#shared/middleware.js';
 import mongoose from 'mongoose';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
 import dayjs from 'dayjs';
-import { sendError, sendSuccess } from '../../../response.js';
+import { sendError, sendSuccess } from '#response';
 
 const router = express.Router();
 dayjs.extend(isSameOrBefore);

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { UserLearningData } from '../../learn/models/userWords.js';
+import { UserLearningData } from '#modules/learn/models/userWords.js';
 
 interface Definition {
   meaning: string;

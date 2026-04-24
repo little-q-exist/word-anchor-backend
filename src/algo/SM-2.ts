@@ -1,4 +1,4 @@
-import type { UserLearningData } from '../models/userWords.js';
+import type { UserLearningData } from '#modules/learn/models/userWords.js';
 
 interface supermemoReturnItem {
   easeFactor: number;

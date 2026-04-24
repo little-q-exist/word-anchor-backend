@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { UserLearningData } from '../models/userWords.js';
+import { UserLearningData } from '#modules/learn/models/userWords.js';
 import { supermemo } from './SM-2.js';
 
 interface LearnReturnItem {

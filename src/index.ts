@@ -3,14 +3,14 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import 'dotenv/config';
 
-import wordRouter from './modules/words/controllers/word.js';
-import userRouter from './modules/users/controllers/users.js';
-import loginRouter from './modules/auth/controllers/login.js';
-import registerRouter from './modules/auth/controllers/register.js';
-import userWordRouter from './modules/learn/controllers/userWords.js';
-import { unknownEndPoint, classErrorHandler, requestLogger } from './middleware.js';
+import wordRouter from '#modules/words/controllers/word.js';
+import userRouter from '#modules/users/controllers/users.js';
+import loginRouter from '#modules/auth/controllers/login.js';
+import registerRouter from '#modules/auth/controllers/register.js';
+import userWordRouter from '#modules/learn/controllers/userWords.js';
+import { unknownEndPoint, classErrorHandler, requestLogger } from '#shared/middleware.js';
 
-import { SERVER_URL } from './constants.js';
+import { SERVER_URL } from '#/constants.js';
 
 const app = express();
 app.use(express.json());
