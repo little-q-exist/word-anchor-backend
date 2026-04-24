@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 
-import User from '../../models/users.js';
+import User from '../../../models/users.js';
 
-import { authTokenMiddleware } from '../../middleware.js';
-import { sendError, sendSuccess } from '../../response.js';
+import { authTokenMiddleware } from '../../../middleware.js';
+import { sendError, sendSuccess } from '../../../response.js';
 
 const router = express.Router();
 
