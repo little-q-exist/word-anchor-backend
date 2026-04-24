@@ -2,8 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-import User from '../../models/users.js';
-import { sendError, sendSuccess } from '../../response.js';
+import User from '../../users/models/users.js';
+import { sendError, sendSuccess } from '../../../response.js';
 
 const router = express.Router();
 

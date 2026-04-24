@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 
-import User, { NewUser } from '../../models/users.js';
+import User, { NewUser } from '../../users/models/users.js';
 
-import { sendError, sendSuccess } from '../../response.js';
+import { sendError, sendSuccess } from '../../../response.js';
 
 const router = express.Router();
 

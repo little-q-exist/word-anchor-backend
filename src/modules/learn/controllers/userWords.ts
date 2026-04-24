@@ -1,12 +1,12 @@
 import express, { NextFunction, Request, Response } from 'express';
 
-import { authTokenMiddleware } from '../../middleware.js';
+import { authTokenMiddleware } from '../../../middleware.js';
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
-import { learn } from '../../algo/learn.js';
-import UserWord, { UserLearningData, defaultUserLearningData } from '../../models/userWords.js';
-import Word from '../../models/words.js';
-import { sendError, sendSuccess } from '../../response.js';
+import { learn } from '../../../algo/learn.js';
+import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
+import Word from '../../words/models/words.js';
+import { sendError, sendSuccess } from '../../../response.js';
 
 const router = express.Router();
 
