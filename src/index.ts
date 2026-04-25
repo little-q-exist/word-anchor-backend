@@ -10,7 +10,7 @@ import registerRouter from '#modules/auth/controllers/register.js';
 import userWordRouter from '#modules/learn/controllers/userWords.js';
 import { unknownEndPoint, classErrorHandler, requestLogger } from '#shared/middleware.js';
 
-import { SERVER_URL } from '#/constants.js';
+import { SERVER_URL } from '#src/constants.js';
 
 const app = express();
 app.use(express.json());
