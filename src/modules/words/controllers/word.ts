@@ -4,12 +4,10 @@ import Word, { type Word as WordType, NewWord, BriefWordListWithMode } from '../
 import UserWord from '#modules/learn/models/userWords.js';
 import { authTokenMiddleware } from '#shared/middleware.js';
 import mongoose from 'mongoose';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
-import dayjs from 'dayjs';
 import { sendError, sendSuccess } from '#response';
+import { TimeService } from '#modules/learn/services/time.js';
 
 const router = express.Router();
-dayjs.extend(isSameOrBefore);
 
 interface WordsQuery {
   english?: object;
@@ -67,7 +65,7 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
 router.get('/review', authTokenMiddleware, async (req: Request, res: Response) => {
   const userId = res.locals._id;
 
-  const endOfDay = dayjs().endOf('day').toISOString();
+  const endOfDay = TimeService.getEndOfToday();
 
   const overDueDataIds = await UserWord.find({
     userId,

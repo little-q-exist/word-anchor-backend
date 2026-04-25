@@ -2,14 +2,13 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { authTokenMiddleware } from '#shared/middleware.js';
 import mongoose from 'mongoose';
-import dayjs from 'dayjs';
-import { learn } from '#/algo/learn.js';
+import { LearnService } from '#modules/learn/services/learn.js';
+import { TimeService } from '#modules/learn/services/time.js';
 import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
 import Word from '#modules/words/models/words.js';
 import { sendError, sendSuccess } from '#response';
 
 const router = express.Router();
-
 interface UpdateFamiliarityResponse extends UserLearningData {
   shouldRepeat: boolean;
 }
@@ -97,7 +96,7 @@ router.patch(
     let learnResult;
 
     if (!userWordDocument) {
-      learnResult = learn(
+      learnResult = LearnService.learn(
         {
           userId: new mongoose.Types.ObjectId(userId),
           wordId: new mongoose.Types.ObjectId(wordId),
@@ -112,7 +111,7 @@ router.patch(
       if (!userLearningData.english && wordDoc.english) {
         userLearningData.english = wordDoc.english;
       }
-      learnResult = learn(userLearningData, familiarity);
+      learnResult = LearnService.learn(userLearningData, familiarity);
       userWordDocument.set(learnResult.data);
     }
 
@@ -188,8 +187,8 @@ router.get(
       return sendError(res, 403, 'forbidden');
     }
 
-    const startOfDay = dayjs().startOf('day').toISOString();
-    const endOfDay = dayjs().endOf('day').toISOString();
+    const startOfDay = TimeService.getStartOfToday();
+    const endOfDay = TimeService.getEndOfToday();
 
     try {
       const todayCount = await UserWord.countDocuments({
