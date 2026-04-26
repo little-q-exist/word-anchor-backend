@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 
-import Word, { type Word as WordType, NewWord, BriefWordListWithMode } from '../models/words.js';
+import Word from '../models/words.js';
+import type { BriefWordListWithMode, NewWord, Word as WordType } from '../types.js';
 import UserWord from '#modules/learn/models/userWords.js';
 import { authTokenMiddleware } from '#shared/middleware.js';
 import mongoose from 'mongoose';

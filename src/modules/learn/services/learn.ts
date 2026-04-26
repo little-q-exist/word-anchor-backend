@@ -1,4 +1,5 @@
-import UserWord, { UserLearningData } from '#modules/learn/models/userWords.js';
+import UserWord from '#modules/learn/models/userWords.js';
+import type { UserLearningData } from '#modules/learn/types.js';
 import { supermemo } from './SM-2.js';
 import { TimeService } from './time.js';
 import mongoose from 'mongoose';

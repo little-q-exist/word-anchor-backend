@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 
-import User, { NewUser } from '#modules/users/models/users.js';
+import User from '#modules/users/models/users.js';
+import type { NewUser } from '#modules/users/types.js';
 
 import { sendError, sendSuccess } from '#response';
 
