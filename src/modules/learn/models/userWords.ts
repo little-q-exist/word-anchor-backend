@@ -12,13 +12,6 @@ export interface UserLearningData {
   favorited: boolean;
 }
 
-export const defaultUserLearningData = {
-  easeFactor: 2.5,
-  interval: 0,
-  repetition: 0,
-  favorited: false,
-};
-
 const userWordSchema = new mongoose.Schema<UserLearningData>({
   userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
   wordId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Word' },

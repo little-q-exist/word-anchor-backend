@@ -4,14 +4,11 @@ import { authTokenMiddleware } from '#shared/middleware.js';
 import mongoose from 'mongoose';
 import { LearnService } from '#modules/learn/services/learn.js';
 import { TimeService } from '#modules/learn/services/time.js';
-import UserWord, { UserLearningData, defaultUserLearningData } from '../models/userWords.js';
+import UserWord from '../models/userWords.js';
 import Word from '#modules/words/models/words.js';
 import { sendError, sendSuccess } from '#response';
 
 const router = express.Router();
-interface UpdateFamiliarityResponse extends UserLearningData {
-  shouldRepeat: boolean;
-}
 
 router.get(
   '/:id/learning-data',
@@ -91,38 +88,14 @@ router.patch(
       return sendError(res, 404, 'word not found');
     }
 
-    let userWordDocument = await UserWord.findOne({ userId, wordId });
+    const updatedUserWordDoc = await LearnService.upsertLearningData(
+      userId,
+      wordId,
+      wordDoc,
+      familiarity
+    );
 
-    let learnResult;
-
-    if (!userWordDocument) {
-      learnResult = LearnService.learn(
-        {
-          userId: new mongoose.Types.ObjectId(userId),
-          wordId: new mongoose.Types.ObjectId(wordId),
-          english: wordDoc.english,
-          ...defaultUserLearningData,
-        },
-        familiarity
-      );
-      userWordDocument = new UserWord(learnResult.data);
-    } else {
-      const userLearningData = userWordDocument.toObject();
-      if (!userLearningData.english && wordDoc.english) {
-        userLearningData.english = wordDoc.english;
-      }
-      learnResult = LearnService.learn(userLearningData, familiarity);
-      userWordDocument.set(learnResult.data);
-    }
-
-    const updatedUserWordDoc = await userWordDocument.save();
-
-    const responseData: UpdateFamiliarityResponse = {
-      ...updatedUserWordDoc.toObject(),
-      shouldRepeat: learnResult.shouldRepeat,
-    };
-
-    return sendSuccess(res, responseData);
+    return sendSuccess(res, updatedUserWordDoc);
   }
 );
 
