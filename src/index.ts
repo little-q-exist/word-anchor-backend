@@ -8,6 +8,7 @@ import userRouter from '#modules/users/controllers/users.js';
 import loginRouter from '#modules/auth/controllers/login.js';
 import registerRouter from '#modules/auth/controllers/register.js';
 import userWordRouter from '#modules/learn/controllers/userWords.js';
+import learnSessionRouter from '#modules/learn/controllers/learnSession.js';
 import { unknownEndPoint, classErrorHandler, requestLogger } from '#shared/middleware.js';
 
 import { SERVER_URL } from '#src/constants.js';
@@ -46,6 +47,7 @@ app.use('/api/users', userRouter);
 app.use('/api/users', registerRouter);
 app.use('/api/login', loginRouter);
 app.use('/api/users', userWordRouter);
+app.use('/api/users', learnSessionRouter);
 
 app.use(unknownEndPoint);
 app.use(classErrorHandler);
