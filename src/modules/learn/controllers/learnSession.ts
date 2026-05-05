@@ -182,6 +182,71 @@ router.put(
   }
 );
 
+interface PatchLearningSessionBody {
+  queueSnapshot: SessionQueueSnapshot;
+  version?: number;
+}
+
+router.patch(
+  '/:userId/learning-sessions/:mode',
+  authTokenMiddleware,
+  async (
+    req: Request<{ userId: string; mode: string }, unknown, PatchLearningSessionBody>,
+    res: Response
+  ) => {
+    const { userId, mode } = req.params;
+    const { queueSnapshot, version } = req.body;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
+    }
+
+    if (!isLearningMode(mode)) {
+      return sendError(res, 400, 'invalid learning mode');
+    }
+
+    if (!queueSnapshot || !isValidQueueSnapshot(queueSnapshot)) {
+      return sendError(res, 400, 'invalid queue snapshot');
+    }
+
+    const existingSession = await LearningSession.findOne({ userId, mode });
+
+    if (!existingSession) {
+      return sendError(res, 404, 'learning session not found');
+    }
+
+    if (
+      typeof version === 'number' &&
+      Number.isFinite(version) &&
+      existingSession.version !== version
+    ) {
+      return sendError(res, 409, 'learning session version conflict', {
+        latest: existingSession.toObject(),
+      });
+    }
+
+    const nextVersion = existingSession.version + 1;
+
+    const savedSession = await LearningSession.findOneAndUpdate(
+      { userId, mode },
+      {
+        queueSnapshot,
+        version: nextVersion,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).lean();
+
+    return sendSuccess(res, savedSession);
+  }
+);
+
 router.delete(
   '/:userId/learning-sessions/:mode',
   authTokenMiddleware,
