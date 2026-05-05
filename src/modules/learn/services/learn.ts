@@ -1,5 +1,7 @@
 import UserWord from '#modules/learn/models/userWords.js';
 import type { UserLearningData } from '#modules/learn/types.js';
+import type { SessionWordState } from '#modules/learn/models/learningSessions.js';
+import Word from '#modules/words/models/words.js';
 import { supermemo } from './SM-2.js';
 import { TimeService } from './time.js';
 import mongoose from 'mongoose';
@@ -64,4 +66,40 @@ export class LearnService {
       shouldRepeat,
     };
   };
+
+  static async getWordToLearn(userId: string, limit: number = 25): Promise<SessionWordState[]> {
+    const learnedWordIds = await UserWord.find({
+      userId,
+      lastLearned: { $exists: true },
+    }).distinct('wordId');
+
+    const wordDocs = await Word.find({ _id: { $nin: learnedWordIds } }, '_id english')
+      .limit(Number(limit))
+      .lean();
+
+    return wordDocs.map((word) => ({
+      _id: word._id.toString(),
+      english: word.english,
+      status: 'idle',
+    }));
+  }
+
+  static async getWordToReview(userId: string, limit: number = 25): Promise<SessionWordState[]> {
+    const endOfDay = TimeService.getEndOfToday();
+
+    const overDueDataIds = await UserWord.find({
+      userId,
+      dueDate: { $lte: endOfDay },
+    })
+      .sort({ dueDate: 'asc', easeFactor: 'asc' })
+      .select('wordId english')
+      .limit(Number(limit))
+      .lean();
+
+    return overDueDataIds.map((item) => ({
+      _id: item.wordId.toString(),
+      english: item.english,
+      status: 'idle',
+    }));
+  }
 }

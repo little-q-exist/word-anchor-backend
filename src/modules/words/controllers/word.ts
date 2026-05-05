@@ -58,7 +58,7 @@ router.get('/learn', authTokenMiddleware, async (req: Request, res: Response) =>
 
   return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'learn',
-    words: words.map((word) => ({ _id: word._id, english: word.english })),
+    words: words.map((word) => ({ _id: word._id, english: word.english, status: 'idle' })),
     count: words.length,
   });
 });
@@ -78,7 +78,7 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
 
   return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'review',
-    words: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english })),
+    words: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english, status: 'idle' })),
     count: overDueDataIds.length,
   });
 });

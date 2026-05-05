@@ -33,6 +33,7 @@ export interface WordPopulated extends Word {
 export interface BriefWord {
   _id: mongoose.Types.ObjectId;
   english: string;
+  status: 'idle' | 'passed' | 'failed';
 }
 
 export interface BriefWordListWithMode {

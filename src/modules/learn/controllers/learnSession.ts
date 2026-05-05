@@ -8,6 +8,7 @@ import LearningSession, {
   SessionQueueSnapshot,
   SessionWordState,
 } from '#modules/learn/models/learningSessions.js';
+import { LearnService } from '#modules/learn/services/learn.js';
 
 const router = express.Router();
 
@@ -69,6 +70,52 @@ router.get(
   }
 );
 
+router.post(
+  '/:userId/learning-sessions/:mode',
+  authTokenMiddleware,
+  async (req: Request<{ userId: string; mode: string }>, res: Response) => {
+    const { userId, mode } = req.params;
+    const { limit = 10 } = req.query;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return sendError(res, 400, 'invalid user id');
+    }
+
+    if (userId !== res.locals._id) {
+      return sendError(res, 403, 'forbidden');
+    }
+
+    if (!isLearningMode(mode)) {
+      return sendError(res, 400, 'invalid learning mode');
+    }
+
+    const existingSession = await LearningSession.findOne({ userId, mode }).lean();
+
+    if (existingSession) {
+      return sendError(res, 409, 'learning session already exists');
+    }
+
+    const words =
+      mode === 'learn'
+        ? await LearnService.getWordToLearn(userId, Number(limit))
+        : await LearnService.getWordToReview(userId, Number(limit));
+
+    const newSession = await LearningSession.create({
+      userId: new mongoose.Types.ObjectId(userId),
+      mode,
+      words,
+      queueSnapshot: {
+        index: 0,
+        isRepeating: false,
+        repeatQueue: [],
+        updatedAt: Date.now(),
+      },
+    });
+
+    return sendSuccess(res, newSession);
+  }
+);
+
 router.put(
   '/:userId/learning-sessions/:mode',
   authTokenMiddleware,
@@ -77,7 +124,7 @@ router.put(
     res: Response
   ) => {
     const { userId, mode } = req.params;
-    const { words, queueSnapshot, version, deviceId } = req.body;
+    const { words, queueSnapshot, version } = req.body;
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return sendError(res, 400, 'invalid user id');
@@ -122,7 +169,6 @@ router.put(
         words,
         queueSnapshot,
         version: nextVersion,
-        updatedByDevice: typeof deviceId === 'string' ? deviceId : undefined,
       },
       {
         upsert: true,
