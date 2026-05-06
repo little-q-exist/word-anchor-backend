@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import type { UserLearningData } from '#modules/learn/types.js';
 
 export interface Definition {
   meaning: string;
@@ -23,11 +22,6 @@ export interface Word {
   related: string[];
   tags: string[];
   createdBy: mongoose.Types.ObjectId;
-  learnedBy: [mongoose.Types.ObjectId];
-}
-
-export interface WordPopulated extends Word {
-  learningData: UserLearningData[];
 }
 
 export interface BriefWord {

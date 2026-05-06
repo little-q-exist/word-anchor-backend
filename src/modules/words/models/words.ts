@@ -18,7 +18,6 @@ type THydratedWordDocument = {
   related: string[];
   tags: string[];
   createdBy: mongoose.Types.ObjectId;
-  learnedBy: [mongoose.Types.ObjectId];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
