@@ -38,7 +38,7 @@ const sessionQueueSnapshotSchema = new mongoose.Schema<SessionQueueSnapshot>(
     index: { type: Number, required: true, default: 0 },
     isRepeating: { type: Boolean, required: true, default: false },
     repeatQueue: { type: [Number], required: true, default: [] },
-    version: { type: String, default: TimeService.getCurrentTimeStamp() },
+    version: { type: String, default: () => TimeService.getCurrentTimeStamp() },
   },
   { _id: false }
 );
@@ -48,7 +48,7 @@ const learningSessionSchema = new mongoose.Schema<LearningSession>({
   mode: { type: String, required: true, enum: ['learn', 'review'] },
   words: { type: [sessionWordSchema], required: true },
   queueSnapshot: { type: sessionQueueSnapshotSchema, default: () => ({}) },
-  version: { type: String, default: TimeService.getCurrentTimeStamp() },
+  version: { type: String, default: () => TimeService.getCurrentTimeStamp() },
 });
 
 learningSessionSchema.index({ userId: 1, mode: 1 }, { unique: true });
