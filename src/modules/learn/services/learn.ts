@@ -1,6 +1,6 @@
 import UserWord from '#modules/learn/models/userWords.js';
 import type { UserLearningData } from '#modules/learn/types.js';
-import type { SessionWordState } from '#modules/learn/models/learningSessions.js';
+import type { SessionWord } from '#modules/learn/models/learningSessions.js';
 import Word from '#modules/words/models/words.js';
 import { supermemo } from './SM-2.js';
 import { TimeService } from './time.js';
@@ -67,7 +67,7 @@ export class LearnService {
     };
   };
 
-  static async getWordToLearn(userId: string, limit: number = 25): Promise<SessionWordState[]> {
+  static async getWordToLearn(userId: string, limit: number = 25): Promise<SessionWord[]> {
     const learnedWordIds = await UserWord.find({
       userId,
       lastLearned: { $exists: true },
@@ -84,7 +84,7 @@ export class LearnService {
     }));
   }
 
-  static async getWordToReview(userId: string, limit: number = 25): Promise<SessionWordState[]> {
+  static async getWordToReview(userId: string, limit: number = 25): Promise<SessionWord[]> {
     const endOfDay = TimeService.getEndOfToday();
 
     const overDueDataIds = await UserWord.find({
