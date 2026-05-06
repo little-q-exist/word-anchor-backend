@@ -6,18 +6,12 @@ import { sendError, sendSuccess } from '#response';
 import LearningSession, {
   LearningMode,
   SessionQueueSnapshot,
-  SessionWordState,
+  LearningSession as LearningSessionType,
 } from '#modules/learn/models/learningSessions.js';
 import { LearnService } from '#modules/learn/services/learn.js';
+import { TimeService } from '../services/time.js';
 
 const router = express.Router();
-
-interface UpsertLearningSessionBody {
-  words: SessionWordState[];
-  queueSnapshot: SessionQueueSnapshot;
-  version?: number;
-  deviceId?: string;
-}
 
 const learningModes: LearningMode[] = ['learn', 'review'];
 
@@ -31,18 +25,7 @@ const isValidQueueSnapshot = (snapshot: SessionQueueSnapshot): boolean => {
     snapshot.index >= 0 &&
     typeof snapshot.isRepeating === 'boolean' &&
     Array.isArray(snapshot.repeatQueue) &&
-    snapshot.repeatQueue.every((item) => Number.isInteger(item) && item >= 0) &&
-    Number.isFinite(snapshot.updatedAt)
-  );
-};
-
-const isValidSessionWord = (word: SessionWordState): boolean => {
-  return (
-    typeof word._id === 'string' &&
-    word._id.length > 0 &&
-    typeof word.english === 'string' &&
-    word.english.length > 0 &&
-    ['idle', 'passed', 'failed'].includes(word.status)
+    snapshot.repeatQueue.every((item) => Number.isInteger(item) && item >= 0)
   );
 };
 
@@ -104,88 +87,14 @@ router.post(
       userId: new mongoose.Types.ObjectId(userId),
       mode,
       words,
-      queueSnapshot: {
-        index: 0,
-        isRepeating: false,
-        repeatQueue: [],
-        updatedAt: Date.now(),
-      },
+      version: TimeService.getCurrentTimeStamp(),
     });
 
     return sendSuccess(res, newSession);
   }
 );
 
-router.put(
-  '/:userId/learning-sessions/:mode',
-  authTokenMiddleware,
-  async (
-    req: Request<{ userId: string; mode: string }, unknown, UpsertLearningSessionBody>,
-    res: Response
-  ) => {
-    const { userId, mode } = req.params;
-    const { words, queueSnapshot, version } = req.body;
-
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return sendError(res, 400, 'invalid user id');
-    }
-
-    if (userId !== res.locals._id) {
-      return sendError(res, 403, 'forbidden');
-    }
-
-    if (!isLearningMode(mode)) {
-      return sendError(res, 400, 'invalid learning mode');
-    }
-
-    if (!Array.isArray(words) || !words.every(isValidSessionWord)) {
-      return sendError(res, 400, 'invalid words payload');
-    }
-
-    if (!queueSnapshot || !isValidQueueSnapshot(queueSnapshot)) {
-      return sendError(res, 400, 'invalid queue snapshot');
-    }
-
-    const existingSession = await LearningSession.findOne({ userId, mode });
-
-    if (
-      typeof version === 'number' &&
-      Number.isFinite(version) &&
-      existingSession &&
-      existingSession.version !== version
-    ) {
-      return sendError(res, 409, 'learning session version conflict', {
-        latest: existingSession.toObject(),
-      });
-    }
-
-    const nextVersion = existingSession ? existingSession.version + 1 : 1;
-
-    const savedSession = await LearningSession.findOneAndUpdate(
-      { userId, mode },
-      {
-        userId: new mongoose.Types.ObjectId(userId),
-        mode,
-        words,
-        queueSnapshot,
-        version: nextVersion,
-      },
-      {
-        upsert: true,
-        new: true,
-        runValidators: true,
-        setDefaultsOnInsert: true,
-      }
-    ).lean();
-
-    return sendSuccess(res, savedSession);
-  }
-);
-
-interface PatchLearningSessionBody {
-  queueSnapshot: SessionQueueSnapshot;
-  version?: number;
-}
+type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot' | 'version'>;
 
 router.patch(
   '/:userId/learning-sessions/:mode',
@@ -220,22 +129,19 @@ router.patch(
     }
 
     if (
-      typeof version === 'number' &&
-      Number.isFinite(version) &&
-      existingSession.version !== version
+      existingSession &&
+      !TimeService.parseDate(version).isSame(TimeService.parseDate(existingSession.version))
     ) {
       return sendError(res, 409, 'learning session version conflict', {
         latest: existingSession.toObject(),
       });
     }
 
-    const nextVersion = existingSession.version + 1;
-
     const savedSession = await LearningSession.findOneAndUpdate(
       { userId, mode },
       {
         queueSnapshot,
-        version: nextVersion,
+        version,
       },
       {
         new: true,
