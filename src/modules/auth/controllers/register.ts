@@ -8,18 +8,75 @@ import { sendError, sendSuccess } from '#response';
 
 const router = express.Router();
 
+/**
+ * @openapi
+ * /api/users/{username}/existence:
+ *   get:
+ *     tags: [Auth]
+ *     summary: 检查用户名是否存在
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 待检查的用户名
+ *     responses:
+ *       200:
+ *         description: 返回用户名是否已存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         exists:
+ *                           type: boolean
+ */
 router.get('/:username/existence', async (req: Request<{ username: string }>, res: Response) => {
   const exists = await User.exists({ username: req.params.username });
   /*
     TODO: This endpoint leaks whether a username is registered,
     which enables user enumeration.
-    If it’s required for UX, consider adding rate limiting/throttling,
+    If it's required for UX, consider adding rate limiting/throttling,
     normalization (trim/lowercase if applicable),
     and/or returning a less directly enumerable response (or requiring auth) to reduce abuse risk.
   */
   return sendSuccess(res, { exists: !!exists });
 });
 
+/**
+ * @openapi
+ * /api/users/register:
+ *   post:
+ *     tags: [Auth]
+ *     summary: 用户注册
+ *     description: 注册新用户，密码使用 bcrypt 加密（13 轮 salt）
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NewUser'
+ *     responses:
+ *       201:
+ *         description: 注册成功，返回新用户信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
+ *       400:
+ *         description: 用户名已存在
+ */
 router.post('/register', async (req: Request<unknown, unknown, NewUser>, res: Response) => {
   const { username, password, email = '' } = req.body;
 

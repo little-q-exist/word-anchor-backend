@@ -10,6 +10,41 @@ import { sendError, sendSuccess } from '#response';
 
 const router = express.Router();
 
+/**
+ * @openapi
+ * /api/users/{id}/learning-data:
+ *   get:
+ *     tags: [Learn]
+ *     summary: 获取用户学习数据
+ *     description: 获取指定用户的所有单词学习记录
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *     responses:
+ *       200:
+ *         description: 用户的学习数据列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/UserWord'
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权访问其他用户数据
+ */
 router.get(
   '/:id/learning-data',
   authTokenMiddleware,
@@ -22,6 +57,51 @@ router.get(
   }
 );
 
+/**
+ * @openapi
+ * /api/users/{userId}/words/{wordId}:
+ *   get:
+ *     tags: [Learn]
+ *     summary: 获取用户对单个单词的学习记录
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: wordId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 单词 ID
+ *       - in: query
+ *         name: fields
+ *         schema:
+ *           type: string
+ *         description: 需要返回的字段，逗号分隔
+ *     responses:
+ *       200:
+ *         description: 用户-单词学习记录
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/UserWord'
+ *       400:
+ *         description: 无效的用户 ID 或单词 ID
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权访问其他用户数据
+ */
 router.get(
   '/:userId/words/:wordId',
   authTokenMiddleware,
@@ -55,6 +135,55 @@ router.get(
   }
 );
 
+/**
+ * @openapi
+ * /api/users/{userId}/words/{wordId}/familiarity:
+ *   patch:
+ *     tags: [Learn]
+ *     summary: 更新单词熟练度
+ *     description: 更新用户对指定单词的熟练度（0-5），将触发间隔学习算法重新计算复习时间
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: wordId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 单词 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/FamiliarityBody'
+ *     responses:
+ *       200:
+ *         description: 更新后的学习记录
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/UserWord'
+ *       400:
+ *         description: 无效的用户 ID、单词 ID 或熟练度值
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权操作其他用户数据
+ *       404:
+ *         description: 单词不存在
+ */
 router.patch(
   '/:userId/words/:wordId/familiarity',
   authTokenMiddleware,
@@ -99,6 +228,49 @@ router.patch(
   }
 );
 
+/**
+ * @openapi
+ * /api/users/{userId}/words/{wordId}/favorite:
+ *   patch:
+ *     tags: [Learn]
+ *     summary: 切换单词收藏状态
+ *     description: 切换用户对指定单词的收藏状态。如果用户尚未学习该单词，会自动创建一条学习记录。
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: wordId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 单词 ID
+ *     responses:
+ *       200:
+ *         description: 更新后的收藏状态
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/UserWordFavoriteResponse'
+ *       400:
+ *         description: 无效的用户 ID 或单词 ID
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权操作其他用户数据
+ *       404:
+ *         description: 单词不存在
+ */
 router.patch(
   '/:userId/words/:wordId/favorite',
   authTokenMiddleware,
@@ -146,6 +318,41 @@ router.patch(
   }
 );
 
+/**
+ * @openapi
+ * /api/users/{userId}/stats:
+ *   get:
+ *     tags: [Learn]
+ *     summary: 获取用户学习统计
+ *     description: 获取用户今日学习数量和总学习数量
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *     responses:
+ *       200:
+ *         description: 学习统计数据
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/StatsResponse'
+ *       400:
+ *         description: 无效的用户 ID
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权访问其他用户数据
+ */
 router.get(
   '/:userId/stats',
   authTokenMiddleware,

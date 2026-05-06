@@ -29,6 +29,48 @@ const isValidQueueSnapshot = (snapshot: SessionQueueSnapshot): boolean => {
   );
 };
 
+/**
+ * @openapi
+ * /api/users/{userId}/learning-sessions/{mode}:
+ *   get:
+ *     tags: [Learn]
+ *     summary: 获取学习会话
+ *     description: 获取用户在指定模式下的学习会话。mode 为 "learn" 或 "review"。
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: mode
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [learn, review]
+ *         description: 学习模式
+ *     responses:
+ *       200:
+ *         description: 学习会话详情（可能为空）
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/LearningSession'
+ *       400:
+ *         description: 无效的用户 ID 或学习模式
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权访问其他用户数据
+ */
 router.get(
   '/:userId/learning-sessions/:mode',
   authTokenMiddleware,
@@ -53,6 +95,56 @@ router.get(
   }
 );
 
+/**
+ * @openapi
+ * /api/users/{userId}/learning-sessions/{mode}:
+ *   post:
+ *     tags: [Learn]
+ *     summary: 创建学习会话
+ *     description: 为用户创建指定模式的学习会话，包含待学习或复习的单词列表。每个用户每种模式只能有一个活跃会话。
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: mode
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [learn, review]
+ *         description: 学习模式
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: 单词数量上限
+ *     responses:
+ *       200:
+ *         description: 创建成功，返回新学习会话
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/LearningSession'
+ *       400:
+ *         description: 无效的用户 ID 或学习模式
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权操作其他用户数据
+ *       409:
+ *         description: 该模式的学习会话已存在
+ */
 router.post(
   '/:userId/learning-sessions/:mode',
   authTokenMiddleware,
@@ -96,6 +188,58 @@ router.post(
 
 type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot' | 'version'>;
 
+/**
+ * @openapi
+ * /api/users/{userId}/learning-sessions/{mode}:
+ *   patch:
+ *     tags: [Learn]
+ *     summary: 更新学习会话
+ *     description: 更新学习会话的队列快照。使用 version 字段进行乐观锁并发控制以防止冲突。
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: mode
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [learn, review]
+ *         description: 学习模式
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PatchLearningSessionBody'
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/LearningSession'
+ *       400:
+ *         description: 无效的用户 ID、学习模式或队列快照
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权操作其他用户数据
+ *       404:
+ *         description: 学习会话不存在
+ *       409:
+ *         description: 版本冲突，返回最新的会话数据
+ */
 router.patch(
   '/:userId/learning-sessions/:mode',
   authTokenMiddleware,
@@ -153,6 +297,43 @@ router.patch(
   }
 );
 
+/**
+ * @openapi
+ * /api/users/{userId}/learning-sessions/{mode}:
+ *   delete:
+ *     tags: [Learn]
+ *     summary: 删除学习会话
+ *     description: 删除用户指定模式的学习会话
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: path
+ *         name: mode
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [learn, review]
+ *         description: 学习模式
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
+ *       400:
+ *         description: 无效的用户 ID 或学习模式
+ *       401:
+ *         description: token 无效或缺失
+ *       403:
+ *         description: 无权操作其他用户数据
+ */
 router.delete(
   '/:userId/learning-sessions/:mode',
   authTokenMiddleware,
