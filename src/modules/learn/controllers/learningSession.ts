@@ -238,7 +238,7 @@ type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot' | 'ver
  *       404:
  *         description: 学习会话不存在
  *       409:
- *         description: 版本冲突，返回最新的会话数据
+ *         description: 学习会话/学习队列版本冲突，返回最新的会话数据
  */
 router.patch(
   '/:userId/learning-sessions/:mode',
@@ -281,10 +281,21 @@ router.patch(
       });
     }
 
+    if (
+      queueSnapshot &&
+      !TimeService.parseDate(queueSnapshot.version).isSame(
+        TimeService.parseDate(existingSession.queueSnapshot.version)
+      )
+    ) {
+      return sendError(res, 409, 'queue snapshot version conflict', {
+        latestQueueSnapshot: existingSession.queueSnapshot,
+      });
+    }
+
     const savedSession = await LearningSession.findOneAndUpdate(
       { userId, mode },
       {
-        queueSnapshot,
+        queueSnapshot: { ...queueSnapshot, version: TimeService.getCurrentTimeStamp() },
         version,
       },
       {
