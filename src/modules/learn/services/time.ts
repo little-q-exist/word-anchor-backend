@@ -8,4 +8,6 @@ export class TimeService {
 
   static getStartOfToday = (): string => dayjs().startOf('day').toISOString();
   static getEndOfToday = (): string => dayjs().endOf('day').toISOString();
+
+  static parseDate = (date: string) => dayjs(date);
 }
