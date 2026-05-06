@@ -1,17 +1,5 @@
 import mongoose from 'mongoose';
-
-export interface NewUser {
-  username: string;
-  email?: string;
-  password: string;
-}
-
-export interface User {
-  username: string;
-  email?: string;
-  passwordHash: string;
-  isAdmin: boolean;
-}
+import type { User } from '../types.js';
 
 const userSchema = new mongoose.Schema<User>({
   username: { type: String, required: true, index: true, unique: true },

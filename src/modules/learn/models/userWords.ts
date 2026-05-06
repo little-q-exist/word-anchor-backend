@@ -1,23 +1,5 @@
 import mongoose from 'mongoose';
-
-export interface UserLearningData {
-  userId: mongoose.Types.ObjectId;
-  wordId: mongoose.Types.ObjectId;
-  english: string;
-  easeFactor: number;
-  lastLearned?: string;
-  interval: number;
-  dueDate?: string;
-  repetition: number;
-  favorited: boolean;
-}
-
-export const defaultUserLearningData = {
-  easeFactor: 2.5,
-  interval: 0,
-  repetition: 0,
-  favorited: false,
-};
+import type { UserLearningData } from '../types.js';
 
 const userWordSchema = new mongoose.Schema<UserLearningData>({
   userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },

@@ -1,10 +1,5 @@
 import mongoose from 'mongoose';
-import { UserLearningData } from './userWords.js';
-
-interface Definition {
-  meaning: string;
-  partOfSpeech: string;
-}
+import type { Definition, Word } from '../types.js';
 
 const definitionSchema = new mongoose.Schema<Definition>({
   meaning: { type: String, required: [true, 'Must have a meaning'] },
@@ -15,26 +10,6 @@ const definitionSchema = new mongoose.Schema<Definition>({
   },
 });
 
-export interface NewWord {
-  definitions: Definition[];
-  english: string;
-  exampleSentence: string[];
-  phonetic: string;
-  related: string[];
-  tags: string[];
-}
-
-export interface Word {
-  definitions: Definition[];
-  english: string;
-  exampleSentence: string[];
-  phonetic: string;
-  related: string[];
-  tags: string[];
-  createdBy: mongoose.Types.ObjectId;
-  learnedBy: [mongoose.Types.ObjectId];
-}
-
 type THydratedWordDocument = {
   definitions?: mongoose.Types.DocumentArray<Definition>;
   english: string;
@@ -43,7 +18,6 @@ type THydratedWordDocument = {
   related: string[];
   tags: string[];
   createdBy: mongoose.Types.ObjectId;
-  learnedBy: [mongoose.Types.ObjectId];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -91,28 +65,5 @@ wordSchema.virtual('learningData', {
   localField: '_id',
   foreignField: 'wordId',
 });
-
-export interface WordPopulated extends Word {
-  learningData: UserLearningData[];
-}
-
-export interface BriefWord {
-  _id: mongoose.Types.ObjectId;
-  english: string;
-}
-
-export interface BriefWordListWithMode {
-  /**
-   * List of brief word objects in the selected mode.
-   */
-  words: BriefWord[];
-  /**
-   * @deprecated Use `words` instead. This field contains full `BriefWord` objects,
-   * not IDs. It is kept only for backward compatibility.
-   */
-  wordIds?: BriefWord[];
-  mode: 'learn' | 'review';
-  count: number;
-}
 
 export default mongoose.model('Word', wordSchema);
