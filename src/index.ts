@@ -13,7 +13,7 @@ import learningSessionRouter from '#src/modules/learn/controllers/learningSessio
 import { unknownEndPoint, classErrorHandler, requestLogger } from '#shared/middleware.js';
 import { openapiSpecification } from '#src/swagger.js';
 
-import { SERVER_URL } from '#src/constants.js';
+import { API_URL, SERVER_URL } from '#src/constants.js';
 
 const app = express();
 app.use(express.json());
@@ -29,8 +29,7 @@ mongoose
   .then(() => {
     console.info('successful connected');
     app.listen(PORT, () => {
-      console.info(`Server is running at ${SERVER_URL}/words`);
-      console.info(`Server is running at ${SERVER_URL}/users`);
+      console.info(`Server is running at ${SERVER_URL} and API docs are available at ${API_URL}`);
     });
   })
   .catch((error) => {
