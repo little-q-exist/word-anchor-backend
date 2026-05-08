@@ -186,7 +186,7 @@ router.post(
   }
 );
 
-type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot' | 'version'>;
+type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot'>;
 
 /**
  * @openapi
@@ -248,7 +248,7 @@ router.patch(
     res: Response
   ) => {
     const { userId, mode } = req.params;
-    const { queueSnapshot, version } = req.body;
+    const { queueSnapshot } = req.body;
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return sendError(res, 400, 'invalid user id');
@@ -273,15 +273,6 @@ router.patch(
     }
 
     if (
-      existingSession &&
-      !TimeService.parseDate(version).isSame(TimeService.parseDate(existingSession.version))
-    ) {
-      return sendError(res, 409, 'learning session version conflict', {
-        latest: existingSession.toObject(),
-      });
-    }
-
-    if (
       queueSnapshot &&
       !TimeService.parseDate(queueSnapshot.version).isSame(
         TimeService.parseDate(existingSession.queueSnapshot.version)
@@ -296,7 +287,6 @@ router.patch(
       { userId, mode },
       {
         queueSnapshot: { ...queueSnapshot, version: TimeService.getCurrentTimeStamp() },
-        version,
       },
       {
         new: true,

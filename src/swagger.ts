@@ -191,7 +191,7 @@ const options: swaggerJsdoc.Options = {
         },
         PatchLearningSessionBody: {
           type: 'object',
-          required: ['queueSnapshot', 'version'],
+          required: ['queueSnapshot'],
           properties: {
             queueSnapshot: {
               type: 'object',
@@ -202,7 +202,6 @@ const options: swaggerJsdoc.Options = {
                 version: { type: 'string' },
               },
             },
-            version: { type: 'string' },
           },
         },
         StatsResponse: {
