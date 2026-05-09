@@ -279,7 +279,7 @@ router.patch(
       )
     ) {
       return sendError(res, 409, 'queue snapshot version conflict', {
-        latestQueueSnapshot: existingSession.queueSnapshot,
+        existingSession,
       });
     }
 
