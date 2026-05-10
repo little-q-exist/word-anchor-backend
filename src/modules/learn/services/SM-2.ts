@@ -33,9 +33,11 @@ const calculateInterval = (interval: number, repetition: number, easeFactor: num
   }
 };
 
-/** call this to calculate easefactor and interval
+/**
+ *  call this to calculate easefactor and interval
  *  after submitted learning result.
- *  ONLY call it during the first review of each day  */
+ *  ONLY call it during the first review of each day
+ * */
 export const supermemo = (
   {
     easeFactor,
