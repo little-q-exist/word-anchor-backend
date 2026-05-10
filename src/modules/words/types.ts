@@ -31,9 +31,6 @@ export interface BriefWord {
 }
 
 export interface BriefWordListWithMode {
-  /**
-   * List of brief word objects in the selected mode.
-   */
   words: BriefWord[];
   mode: 'learn' | 'review';
   count: number;
