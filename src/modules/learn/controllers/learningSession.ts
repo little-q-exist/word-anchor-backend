@@ -175,6 +175,10 @@ router.post(
         ? await LearnService.getWordToLearn(userId, Number(limit))
         : await LearnService.getWordToReview(userId, Number(limit));
 
+    if (words.length === 0) {
+      return sendSuccess(res, null);
+    }
+
     const newSession = await LearningSession.create({
       userId: new mongoose.Types.ObjectId(userId),
       mode,
