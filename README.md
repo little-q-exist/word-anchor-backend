@@ -81,9 +81,9 @@ recite-word-server/
 
 ### 环境要求
 
-- **Node.js** >= 18
+- **Node.js** >= 22
 - **MongoDB** 实例（本地或 Atlas 云端），需要获取连接 URI
-- **npm** >= 9
+- **npm** >= 11
 
 ### 本地开发
 
