@@ -3,7 +3,7 @@ name: refactor-safe-relocation
 description: "用于 TypeScript/React 项目的通用安全重构搬迁。适用于任意文件类型（如 components、hooks、utils、constants、services、types、styles、api、state）按模块归位。关键词：重构、迁移、下沉、按模块拆分、只复制不删除、修复 import/export 路径、保持逻辑不变、构建校验。"
 argument-hint: "说明要迁移的源文件/目录、目标模块映射规则、是否只复制不删除、是否执行构建验证"
 user-invocable: true
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 
 # 通用安全重构搬迁技能（Copy-First）
