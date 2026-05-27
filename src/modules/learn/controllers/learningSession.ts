@@ -7,6 +7,7 @@ import LearningSession, {
   LearningMode,
   SessionQueueSnapshot,
   LearningSession as LearningSessionType,
+  SessionWord,
 } from '#modules/learn/models/learningSessions.js';
 import { LearnService } from '#modules/learn/services/learn.js';
 import { TimeService } from '../services/time.js';
@@ -190,7 +191,9 @@ router.post(
   }
 );
 
-type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot'>;
+type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot'> & {
+  words: Pick<SessionWord, '_id' | 'status'>[];
+};
 
 /**
  * @openapi
@@ -198,7 +201,7 @@ type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot'>;
  *   patch:
  *     tags: [Learn]
  *     summary: 更新学习会话
- *     description: 更新学习会话的队列快照。使用 version 字段进行乐观锁并发控制以防止冲突。
+ *     description: 更新学习会话的队列快照及单词学习状态。使用 version 字段进行乐观锁并发控制以防止冲突。
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -223,7 +226,7 @@ type PatchLearningSessionBody = Pick<LearningSessionType, 'queueSnapshot'>;
  *             $ref: '#/components/schemas/PatchLearningSessionBody'
  *     responses:
  *       200:
- *         description: 更新成功
+ *         description: 更新成功，返回更新后的学习会话
  *         content:
  *           application/json:
  *             schema:
@@ -252,7 +255,7 @@ router.patch(
     res: Response
   ) => {
     const { userId, mode } = req.params;
-    const { queueSnapshot } = req.body;
+    const { queueSnapshot, words } = req.body;
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return sendError(res, 400, 'invalid user id');
@@ -291,9 +294,13 @@ router.patch(
       { userId, mode },
       {
         queueSnapshot: { ...queueSnapshot, version: TimeService.getCurrentTimeStamp() },
+        words: existingSession.words.map((word) => {
+          const updatedWord = words.find((w) => w._id.toString() === word._id.toString());
+          return updatedWord ? { ...word, status: updatedWord.status } : word;
+        }),
       },
       {
-        new: true,
+        returnDocument: 'after',
         runValidators: true,
       }
     ).lean();

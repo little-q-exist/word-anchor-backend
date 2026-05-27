@@ -191,7 +191,7 @@ const options: swaggerJsdoc.Options = {
         },
         PatchLearningSessionBody: {
           type: 'object',
-          required: ['queueSnapshot'],
+          required: ['queueSnapshot', 'words'],
           properties: {
             queueSnapshot: {
               type: 'object',
@@ -200,6 +200,21 @@ const options: swaggerJsdoc.Options = {
                 isRepeating: { type: 'boolean' },
                 repeatQueue: { type: 'array', items: { type: 'integer' } },
                 version: { type: 'string' },
+              },
+            },
+            words: {
+              type: 'array',
+              description: '单词状态更新列表',
+              items: {
+                type: 'object',
+                properties: {
+                  _id: { type: 'string', description: '单词 ID' },
+                  status: {
+                    type: 'string',
+                    enum: ['idle', 'passed', 'failed'],
+                    description: '学习状态',
+                  },
+                },
               },
             },
           },
