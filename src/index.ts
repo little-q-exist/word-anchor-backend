@@ -65,3 +65,5 @@ app.use('/api/users', learningSessionRouter);
 
 app.use(unknownEndPoint);
 app.use(classErrorHandler);
+
+export default app;
