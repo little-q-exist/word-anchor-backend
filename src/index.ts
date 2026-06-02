@@ -17,7 +17,7 @@ import { API_URL, SERVER_URL } from '#src/constants.js';
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+app.use(cors({ origin: ['https://word-anchor.edgeone.dev', 'http://localhost:5173'] }));
 
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || '';
