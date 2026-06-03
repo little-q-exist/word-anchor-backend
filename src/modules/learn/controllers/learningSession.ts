@@ -273,7 +273,7 @@ router.patch(
       return sendError(res, 400, 'invalid queue snapshot');
     }
 
-    const existingSession = await LearningSession.findOne({ userId, mode });
+    const existingSession = await LearningSession.findOne({ userId, mode }).lean();
 
     if (!existingSession) {
       return sendError(res, 404, 'learning session not found');
