@@ -85,6 +85,7 @@ Generated from JSDoc `@openapi` comments in controller files and `src/swagger.ts
 
 ### Key conventions
 
+- When an import path contains two or more consecutive `../` segments (i.e., references to a parent directory two or more levels up), a path alias must be used instead.
 - All controller routers use `express.Router()` and are default-exported.
 - User ownership is enforced by comparing `req.params.userId` to `res.locals._id` — 403 if mismatch.
 - ObjectId validation: `mongoose.Types.ObjectId.isValid()` before every DB operation with user-supplied IDs.
