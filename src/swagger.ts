@@ -105,12 +105,13 @@ const options: swaggerJsdoc.Options = {
           properties: {
             username: { type: 'string' },
             password: { type: 'string' },
+            remember: { type: 'boolean' },
           },
         },
         LoginResponse: {
           type: 'object',
           properties: {
-            token: { type: 'string' },
+            accessToken: { type: 'string' },
             username: { type: 'string' },
             _id: { type: 'string' },
           },
