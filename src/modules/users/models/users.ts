@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema<User>({
   email: String,
   passwordHash: { type: String, required: true, select: false },
   isAdmin: { type: Boolean, required: true, default: false },
+  tokenVersion: { type: Number, required: true, default: 0 },
 });
 
 export default mongoose.model<User>('User', userSchema);
