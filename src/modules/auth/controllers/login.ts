@@ -35,10 +35,10 @@ const router = express.Router();
  *       401:
  *         description: 用户名或密码错误
  *       500:
- *         description: 服务器内部错误（SECRET 未设置）
+ *         description: 服务器内部错误（SECRET 或 REFRESH_SECRET 未设置）
  */
 router.post('/', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, remember = false } = req.body;
 
   const userInDB = await User.findOne({ username: username }).select('+passwordHash');
 
@@ -60,9 +60,27 @@ router.post('/', async (req, res) => {
     return sendError(res, 500, 'internal server error');
   }
 
-  const token = jwt.sign({ username, _id: userInDB._id }, secret, { expiresIn: '30d' });
+  const refreshSecret = process.env.REFRESH_SECRET;
+  if (!refreshSecret) {
+    console.error('REFRESH_SECRET environment variable is not set');
+    return sendError(res, 500, 'internal server error');
+  }
 
-  return sendSuccess(res, { token, username, _id: userInDB._id }, 200, 'login successful');
+  const accessToken = jwt.sign({ username, _id: userInDB._id }, secret, { expiresIn: '1d' });
+  const refreshToken = jwt.sign({ username, _id: userInDB._id }, refreshSecret, {
+    expiresIn: '30d',
+  });
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    signed: true,
+    sameSite: 'lax',
+    path: '/api/refresh',
+    secure: process.env.NODE_ENV === 'production',
+    ...(remember ? { maxAge: 30 * 24 * 60 * 1000 } : {}),
+  });
+
+  return sendSuccess(res, { accessToken, username, _id: userInDB._id }, 200, 'login successful');
 });
 
 export default router;
