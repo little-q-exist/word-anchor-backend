@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
     sameSite: 'lax',
     path: '/api/refresh',
     secure: process.env.NODE_ENV === 'production',
-    ...(remember ? { maxAge: 30 * 24 * 60 * 1000 } : {}),
+    ...(remember ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
   });
 
   return sendSuccess(res, { accessToken, username, _id: userInDB._id }, 200, 'login successful');
