@@ -5,7 +5,7 @@ import User from '#modules/users/models/users.js';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   const refreshToken = req.signedCookies.refreshToken;
 
   if (!refreshToken) {
@@ -47,6 +47,7 @@ router.post('/', async (req, res) => {
     return sendSuccess(res, { accessToken, username: userInDB.username, _id: userInDB._id });
   } catch (error) {
     console.error(error);
+    next(error);
   }
 });
 
