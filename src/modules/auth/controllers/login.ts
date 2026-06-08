@@ -67,9 +67,13 @@ router.post('/', async (req, res) => {
   }
 
   const accessToken = jwt.sign({ username, _id: userInDB._id }, secret, { expiresIn: '1d' });
-  const refreshToken = jwt.sign({ username, _id: userInDB._id }, refreshSecret, {
-    expiresIn: '30d',
-  });
+  const refreshToken = jwt.sign(
+    { username, _id: userInDB._id, tokenVersion: userInDB.tokenVersion, remember },
+    refreshSecret,
+    {
+      expiresIn: '30d',
+    }
+  );
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
