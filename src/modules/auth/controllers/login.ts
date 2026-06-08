@@ -13,7 +13,7 @@ const router = express.Router();
  *   post:
  *     tags: [Auth]
  *     summary: 用户登录
- *     description: 使用用户名和密码登录，返回 JWT token（有效期 30 天）
+ *     description: 使用用户名和密码登录，返回 accessToken（有效期 1 天），并设置 refreshToken cookie
  *     requestBody:
  *       required: true
  *       content:
@@ -22,7 +22,7 @@ const router = express.Router();
  *             $ref: '#/components/schemas/LoginBody'
  *     responses:
  *       200:
- *         description: 登录成功，返回 token、用户名和用户 ID
+ *         description: 登录成功，返回 accessToken、用户名和用户 ID
  *         content:
  *           application/json:
  *             schema:
