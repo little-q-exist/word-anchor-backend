@@ -24,10 +24,20 @@ app.use(express.json());
 app.use(
   cors({ origin: ['https://word-anchor.edgeone.dev', 'http://localhost:5173'], credentials: true })
 );
+
+const cookieSecret = process.env.COOKIE_SECRET;
+if (!cookieSecret) {
+  throw new Error('COOKIE_SECRET environment variable is not set');
+}
+
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || '';
+
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  throw new Error('MONGODB_URI environment variable is not set');
+}
 
 console.info('connecting to DB');
 
