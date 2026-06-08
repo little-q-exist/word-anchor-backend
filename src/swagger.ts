@@ -105,12 +105,13 @@ const options: swaggerJsdoc.Options = {
           properties: {
             username: { type: 'string' },
             password: { type: 'string' },
+            remember: { type: 'boolean' },
           },
         },
         LoginResponse: {
           type: 'object',
           properties: {
-            token: { type: 'string' },
+            accessToken: { type: 'string' },
             username: { type: 'string' },
             _id: { type: 'string' },
           },
@@ -244,6 +245,8 @@ const options: swaggerJsdoc.Options = {
     './src/modules/users/controllers/users.ts',
     './src/modules/auth/controllers/login.ts',
     './src/modules/auth/controllers/register.ts',
+    './src/modules/auth/controllers/refresh.ts',
+    './src/modules/auth/controllers/logout.ts',
     './src/modules/learn/controllers/userWords.ts',
     './src/modules/learn/controllers/learningSession.ts',
   ],

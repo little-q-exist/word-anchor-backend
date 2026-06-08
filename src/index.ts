@@ -3,12 +3,15 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import 'dotenv/config';
 import swaggerUi from 'swagger-ui-express';
+import cookieParser from 'cookie-parser';
 
 import wordRouter from '#modules/words/controllers/word.js';
 import userRouter from '#modules/users/controllers/users.js';
 import loginRouter from '#modules/auth/controllers/login.js';
 import registerRouter from '#modules/auth/controllers/register.js';
 import userWordRouter from '#modules/learn/controllers/userWords.js';
+import refreshRouter from '#modules/auth/controllers/refresh.js';
+import logoutRouter from '#modules/auth/controllers/logout.js';
 import learningSessionRouter from '#src/modules/learn/controllers/learningSession.js';
 import { unknownEndPoint, classErrorHandler, requestLogger } from '#shared/middleware.js';
 import { openapiSpecification } from '#src/swagger.js';
@@ -16,11 +19,25 @@ import { openapiSpecification } from '#src/swagger.js';
 import { API_URL, SERVER_URL } from '#src/constants.js';
 
 const app = express();
+
 app.use(express.json());
-app.use(cors({ origin: ['https://word-anchor.edgeone.dev', 'http://localhost:5173'] }));
+app.use(
+  cors({ origin: ['https://word-anchor.edgeone.dev', 'http://localhost:5173'], credentials: true })
+);
+
+const cookieSecret = process.env.COOKIE_SECRET;
+if (!cookieSecret) {
+  throw new Error('COOKIE_SECRET environment variable is not set');
+}
+
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || '';
+
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  throw new Error('MONGODB_URI environment variable is not set');
+}
 
 console.info('connecting to DB');
 
@@ -60,6 +77,8 @@ app.use('/api/words', wordRouter);
 app.use('/api/users', userRouter);
 app.use('/api/users', registerRouter);
 app.use('/api/login', loginRouter);
+app.use('/api/refresh', refreshRouter);
+app.use('/api/logout', logoutRouter);
 app.use('/api/users', userWordRouter);
 app.use('/api/users', learningSessionRouter);
 

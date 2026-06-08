@@ -13,7 +13,7 @@ const router = express.Router();
  *   post:
  *     tags: [Auth]
  *     summary: 用户登录
- *     description: 使用用户名和密码登录，返回 JWT token（有效期 30 天）
+ *     description: 使用用户名和密码登录，返回 accessToken（有效期 1 天），并设置 refreshToken cookie
  *     requestBody:
  *       required: true
  *       content:
@@ -22,7 +22,7 @@ const router = express.Router();
  *             $ref: '#/components/schemas/LoginBody'
  *     responses:
  *       200:
- *         description: 登录成功，返回 token、用户名和用户 ID
+ *         description: 登录成功，返回 accessToken、用户名和用户 ID
  *         content:
  *           application/json:
  *             schema:
@@ -35,10 +35,10 @@ const router = express.Router();
  *       401:
  *         description: 用户名或密码错误
  *       500:
- *         description: 服务器内部错误（SECRET 未设置）
+ *         description: 服务器内部错误（SECRET 或 REFRESH_SECRET 未设置）
  */
 router.post('/', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, remember = false } = req.body;
 
   const userInDB = await User.findOne({ username: username }).select('+passwordHash');
 
@@ -60,9 +60,31 @@ router.post('/', async (req, res) => {
     return sendError(res, 500, 'internal server error');
   }
 
-  const token = jwt.sign({ username, _id: userInDB._id }, secret, { expiresIn: '30d' });
+  const refreshSecret = process.env.REFRESH_SECRET;
+  if (!refreshSecret) {
+    console.error('REFRESH_SECRET environment variable is not set');
+    return sendError(res, 500, 'internal server error');
+  }
 
-  return sendSuccess(res, { token, username, _id: userInDB._id }, 200, 'login successful');
+  const accessToken = jwt.sign({ username, _id: userInDB._id }, secret, { expiresIn: '1d' });
+  const refreshToken = jwt.sign(
+    { username, _id: userInDB._id, tokenVersion: userInDB.tokenVersion, remember },
+    refreshSecret,
+    {
+      expiresIn: '30d',
+    }
+  );
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    signed: true,
+    sameSite: 'lax',
+    path: '/api/refresh',
+    secure: process.env.NODE_ENV === 'production',
+    ...(remember ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
+  });
+
+  return sendSuccess(res, { accessToken, username, _id: userInDB._id }, 200, 'login successful');
 });
 
 export default router;

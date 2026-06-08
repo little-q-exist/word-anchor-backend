@@ -9,4 +9,5 @@ export interface User {
   email?: string;
   passwordHash: string;
   isAdmin: boolean;
+  tokenVersion: number;
 }
