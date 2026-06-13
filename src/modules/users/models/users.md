@@ -12,4 +12,5 @@
 | `username` | String | `required: true`, 唯一 (`unique: true`), 添加索引 (`index: true`) | 用户名，系统内不可重复 |
 | `email` | String | 选填 | 用户的电子邮件地址 |
 | `passwordHash` | String | `required: true`, `select: false` | 加密后的密码散列值，查询时默认不返回以保证安全 |
-| `isAdmin` | Boolean | `required: true`, `default: false` | 是否为系统管理员权限 |
+| `isAdmin` | Boolean | `required: true`, `default: false` | 是否为系统管理员权限，保留 |
+| `tokenVersion` | number | `required: true, default: 0` | refreshToken 版本，可用于修改密码等用户全局登出等功能。保留 |
