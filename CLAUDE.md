@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 WordAnchor — an Express 5 + Mongoose backend for a vocabulary memorization app using the SM-2 spaced repetition algorithm. Written in TypeScript, compiled to ESM (`"type": "module"`, `"module": "nodenext"`).
 
 ## Commands
+在执行构建、lint、格式化时，优先使用已有命令。
 
 | Command | Description |
 |---------|-------------|
