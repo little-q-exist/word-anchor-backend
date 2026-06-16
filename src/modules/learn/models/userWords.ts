@@ -14,5 +14,6 @@ const userWordSchema = new mongoose.Schema<UserLearningData>({
 });
 
 userWordSchema.index({ userId: 1, wordId: 1 }, { unique: true });
+userWordSchema.index({ userId: 1, favorited: 1, wordId: 1 });
 
 export default mongoose.model<UserLearningData>('UserWord', userWordSchema);

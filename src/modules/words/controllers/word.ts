@@ -231,9 +231,112 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
 
   return sendSuccess<BriefWordListWithMode>(res, {
     mode: 'review',
-    words: overDueDataIds.map((item) => ({ _id: item.wordId, english: item.english, status: 'idle' })),
+    words: overDueDataIds.map((item) => ({
+      _id: item.wordId,
+      english: item.english,
+      status: 'idle',
+    })),
     count: overDueDataIds.length,
   });
+});
+
+/**
+ * @openapi
+ * /api/words/favorite:
+ *   get:
+ *     tags: [Word]
+ *     summary: 获取用户收藏单词
+ *     description: 获取当前用户收藏的单词列表，支持分页
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 页码
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: 每页数量
+ *     responses:
+ *       200:
+ *         description: 返回收藏单词列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         words:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               _id:
+ *                                 type: string
+ *                               english:
+ *                                 type: string
+ *                               definitions:
+ *                                 type: array
+ *                                 items:
+ *                                   type: object
+ *                                   properties:
+ *                                     meaning:
+ *                                       type: string
+ *                                     partOfSpeech:
+ *                                       type: string
+ *                               phonetic:
+ *                                 type: string
+ *                         count:
+ *                           type: integer
+ *                         pageSize:
+ *                           type: integer
+ *       401:
+ *         description: token 无效或缺失
+ */
+router.get('/favorite', authTokenMiddleware, async (req: Request, res: Response) => {
+  const { page = 1, limit = 10 } = req.query;
+  const userId = res.locals._id;
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [result] = await UserWord.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId), favorited: true } },
+    { $sort: { wordId: 1 } },
+    {
+      $facet: {
+        count: [{ $count: 'total' }],
+        words: [
+          { $skip: skip },
+          { $limit: Number(limit) },
+          {
+            $lookup: {
+              from: 'words',
+              localField: 'wordId',
+              foreignField: '_id',
+              pipeline: [{ $project: { english: 1, definitions: 1, phonetic: 1 } }],
+              as: 'word',
+            },
+          },
+          { $unwind: '$word' },
+          { $replaceRoot: { newRoot: '$word' } },
+        ],
+      },
+    },
+  ]);
+
+  const count = result.count[0]?.total ?? 0;
+  const words = result.words;
+
+  return sendSuccess(res, { words, count, pageSize: words.length });
 });
 
 /**
