@@ -280,6 +280,8 @@ router.get('/review', authTokenMiddleware, async (req: Request, res: Response) =
  *                           items:
  *                             type: object
  *                             properties:
+ *                               _id:
+ *                                 type: string
  *                               english:
  *                                 type: string
  *                               definitions:
