@@ -308,19 +308,33 @@ router.get('/favorite', authTokenMiddleware, async (req: Request, res: Response)
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const favoritedUserWords = await UserWord.find({ userId, favorited: true })
-    .skip(skip)
-    .limit(Number(limit))
-    .select('wordId')
-    .lean();
+  const [result] = await UserWord.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId), favorited: true } },
+    { $sort: { wordId: 1 } },
+    {
+      $facet: {
+        count: [{ $count: 'total' }],
+        words: [
+          { $skip: skip },
+          { $limit: Number(limit) },
+          {
+            $lookup: {
+              from: 'words',
+              localField: 'wordId',
+              foreignField: '_id',
+              pipeline: [{ $project: { english: 1, definitions: 1, phonetic: 1 } }],
+              as: 'word',
+            },
+          },
+          { $unwind: '$word' },
+          { $replaceRoot: { newRoot: '$word' } },
+        ],
+      },
+    },
+  ]);
 
-  const wordIds = favoritedUserWords.map((uw) => uw.wordId);
-
-  const words = await Word.find({ _id: { $in: wordIds } })
-    .select('english definitions phonetic')
-    .lean();
-
-  const count = await UserWord.countDocuments({ userId, favorited: true });
+  const count = result.count[0]?.total ?? 0;
+  const words = result.words;
 
   return sendSuccess(res, { words, count, pageSize: words.length });
 });
